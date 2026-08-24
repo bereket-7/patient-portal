@@ -1,0 +1,5 @@
+# Used when this repo is cloned standalone (Vercel).
+# In the monorepo, the root workspace still resolves @trialcliniq/shared-ui.
+packages:
+  - '.'
+  - 'vendor/shared-ui'

@@ -1,5 +1,5 @@
 {
   "framework": "nextjs",
-  "installCommand": "cd ../.. && pnpm install --filter @trialcliniq/shared-ui --filter @trialcliniq/patient-portal...",
-  "buildCommand": "cd ../.. && pnpm --filter @trialcliniq/shared-ui build && pnpm --filter @trialcliniq/patient-portal build"
+  "installCommand": "pnpm install",
+  "buildCommand": "pnpm build"
 }
