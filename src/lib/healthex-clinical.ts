@@ -23,7 +23,7 @@ export type HealthExClinicalSummary = {
   };
   conditions: Array<{ code?: string; display?: string; onset?: string }>;
   medications: Array<{ name?: string; status?: string }>;
-  observations: Array<{ display?: string; value?: string; date?: string }>;
+  observations: Array<{ display?: string; value?: string; date?: string; status?: string }>;
   encounters: Array<{
     id?: string;
     type?: string;
@@ -101,7 +101,9 @@ export function mapClinicalToHealthRecords(clinical: HealthExClinicalSummary): H
     name: o.display || 'Observation',
     value: o.value || '—',
     date: o.date || '—',
-    status: 'Final',
+    status: o.status
+      ? o.status.charAt(0).toUpperCase() + o.status.slice(1)
+      : 'Final',
   }));
 
   const vitals: VitalMetric[] = observations

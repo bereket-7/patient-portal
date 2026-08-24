@@ -10,24 +10,27 @@ import {
   Stethoscope,
   User,
 } from 'lucide-react';
+import { BackendEncountersPayload } from '@/components/health/backend-encounters-payload';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useHealthRecords } from '@/lib/hooks/use-health-records';
 import { formatDateTime } from '@/lib/format-date';
-
-const CLASS_LABELS: Record<string, string> = {
-  AMB: 'Ambulatory',
-  EMER: 'Emergency',
-  VR: 'Virtual / telehealth',
-  IMP: 'Inpatient',
-};
+import {
+  encounterClassLabel,
+  findMockBackendEncounter,
+  MOCK_MAPPED_ENCOUNTERS,
+} from '@/lib/mock/backend-encounters';
 
 export default function EncounterDetailPage() {
   const params = useParams();
   const encounterId = params.encounterId as string;
   const { encounters, connected, dataSource } = useHealthRecords();
-  const encounter = encounters.find((e) => e.id === encounterId);
+  const liveEncounter = encounters.find((e) => e.id === encounterId);
+  const sampleEncounter = MOCK_MAPPED_ENCOUNTERS.find((e) => e.id === encounterId);
+  const encounter = liveEncounter || sampleEncounter;
+  const usingSample = !liveEncounter && Boolean(sampleEncounter);
+  const backendRow = findMockBackendEncounter(encounterId);
 
   if (!encounter) {
     return (
@@ -41,9 +44,7 @@ export default function EncounterDetailPage() {
   }
 
   const statusKey = encounter.status?.toLowerCase() || 'finished';
-  const classLabel = encounter.classCode
-    ? CLASS_LABELS[encounter.classCode] || encounter.classCode
-    : null;
+  const classLabel = encounterClassLabel(encounter.classCode);
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
@@ -72,8 +73,15 @@ export default function EncounterDetailPage() {
         </Badge>
       </div>
 
-      {dataSource === 'dummy' && (
-        <p className="rounded-lg border border-amber-200/80 bg-amber-50/80 px-4 py-2 text-sm text-amber-950">
+      {usingSample && (
+        <p className="rounded-lg border border-amber-200/80 bg-amber-50/80 px-4 py-2 text-sm text-amber-950 dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-100">
+          Sample encounter from the HealthEx <code>clinical.encounters</code> contract. Live ingest
+          will replace this when encounters are present on the clinical profile.
+        </p>
+      )}
+
+      {dataSource === 'dummy' && !usingSample && (
+        <p className="rounded-lg border border-amber-200/80 bg-amber-50/80 px-4 py-2 text-sm text-amber-950 dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-100">
           Dev dummy encounter — authorized accounts can persist this via Postgres clinical profile.
         </p>
       )}
@@ -138,6 +146,14 @@ export default function EncounterDetailPage() {
           )}
         </CardContent>
       </Card>
+
+      {usingSample && backendRow && (
+        <BackendEncountersPayload
+          payload={backendRow}
+          title="Backend encounter row"
+          description="Raw clinical.encounters[] object before frontend mapping (class → classCode)."
+        />
+      )}
 
       <div className="flex flex-wrap gap-3">
         <Button asChild variant="outline">

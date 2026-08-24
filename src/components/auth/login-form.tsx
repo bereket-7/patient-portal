@@ -6,7 +6,7 @@ import { z } from 'zod';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Eye, EyeOff, Lock, Mail } from 'lucide-react';
+import { Eye, EyeOff, Loader2, Lock, Mail } from 'lucide-react';
 import { useAuth } from '@trialcliniq/shared-ui';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -76,6 +76,7 @@ export function LoginForm() {
     setError('');
     setBusy(true);
 
+    let navigated = false;
     try {
       const devAccount = await loginDevPatientAccount(values.email, values.password);
       if (devAccount) {
@@ -204,6 +205,7 @@ export function LoginForm() {
         });
         sendWelcomeNotificationIfNeeded(loggedIn.id);
         const showWelcome = searchParams.get('welcome') === '1';
+        navigated = true;
         router.replace(showWelcome ? '/profile/welcome' : '/dashboard');
         return;
       }
@@ -242,11 +244,14 @@ export function LoginForm() {
         resetSession,
       });
 
+      navigated = true;
       router.replace('/dashboard');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unable to sign in. Try again.');
     } finally {
-      setBusy(false);
+      if (!navigated) {
+        setBusy(false);
+      }
     }
   }
 
@@ -271,7 +276,8 @@ export function LoginForm() {
             </p>
             <button
               type="button"
-              className="mt-2 font-medium underline"
+              className="mt-2 font-medium underline disabled:opacity-50"
+              disabled={busy || authLoading}
               onClick={() => fillSeedAccount(readySeed)}
             >
               Fill credentials
@@ -284,7 +290,8 @@ export function LoginForm() {
             <p className="mt-1 font-mono text-xs">jane.doe@patient.demo / DemoPatient1!</p>
             <button
               type="button"
-              className="mt-2 font-medium underline"
+              className="mt-2 font-medium underline disabled:opacity-50"
+              disabled={busy || authLoading}
               onClick={() => {
                 form.setValue('email', 'jane.doe@patient.demo');
                 form.setValue('password', 'DemoPatient1!');
@@ -351,7 +358,8 @@ export function LoginForm() {
                   />
                   <button
                     type="button"
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground disabled:opacity-50"
+                    disabled={busy || authLoading}
                     onClick={() => setShowPassword((v) => !v)}
                     aria-label={showPassword ? 'Hide password' : 'Show password'}
                   >
@@ -365,10 +373,11 @@ export function LoginForm() {
         />
         <Button
           type="submit"
-          className="h-11 w-full text-sm font-semibold"
+          className="h-11 w-full gap-2 text-sm font-semibold"
           disabled={busy || authLoading}
         >
-          {busy ? 'Signing in…' : 'Sign in'}
+          {(busy || authLoading) && <Loader2 className="h-4 w-4 animate-spin" />}
+          {busy || authLoading ? 'Signing in…' : 'Sign in'}
         </Button>
       </form>
     </Form>

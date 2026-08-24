@@ -26,7 +26,7 @@ export function DashboardHealthPreview({
   return (
     <section
       aria-label="Health summary preview"
-      className="relative space-y-4 overflow-hidden rounded-2xl border border-primary/15 bg-gradient-to-b from-accent/40 via-card to-card p-4 shadow-sm sm:p-6"
+      className="space-y-4 rounded-2xl border border-primary/15 bg-gradient-to-b from-accent/40 via-card to-card p-4 shadow-sm sm:p-6"
     >
       <div className="flex flex-col gap-3 border-b border-border/60 pb-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
         <div className="flex min-w-0 items-start gap-3">
@@ -49,10 +49,7 @@ export function DashboardHealthPreview({
         </Button>
       </div>
 
-      <div
-        className="pointer-events-none select-none space-y-4 blur-[2px] opacity-[0.72] saturate-50"
-        aria-hidden
-      >
+      <div className="space-y-4">
         <VitalsRow vitals={preview.vitals} />
         <div className="grid gap-4 lg:grid-cols-3">
           <LastScanCard scan={preview.lastScan} />
@@ -61,8 +58,6 @@ export function DashboardHealthPreview({
         </div>
         <AllergiesCard allergies={preview.allergies} />
       </div>
-
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-card via-card/80 to-transparent" />
     </section>
   );
 }

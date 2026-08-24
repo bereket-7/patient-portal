@@ -1,64 +1,22 @@
+import { MOCK_MAPPED_ENCOUNTERS } from '@/lib/mock/backend-encounters';
+import {
+  MOCK_MAPPED_CONDITIONS,
+  MOCK_MAPPED_MEDICATIONS,
+  MOCK_MAPPED_OBSERVATIONS,
+} from '@/lib/mock/backend-clinical';
 import { MOCK_HEALTH_RECORDS } from '@/lib/mock/health-records';
 import type { CachedClinicalRecords } from '@/lib/healthex-clinical';
 import type { EncounterRecord, HealthRecords } from '@/lib/types/health-records';
 
-/** FHIR-style encounter rows (HealthEx $everything summary shape). */
-export const DUMMY_FHIR_ENCOUNTERS: EncounterRecord[] = [
-  {
-    id: 'enc-001',
-    type: 'Ambulatory · Follow-up',
-    date: '2026-06-15T10:30:00Z',
-    status: 'finished',
-    facility: 'NewAge Hospital — Primary Care',
-    provider: 'Dr. Emily Hartwell',
-    reason: 'Hypertension management & medication review',
-    classCode: 'AMB',
-  },
-  {
-    id: 'enc-002',
-    type: 'Outpatient · Diagnostic imaging',
-    date: '2026-06-15T11:00:00Z',
-    status: 'finished',
-    facility: 'NewAge Hospital — Radiology',
-    provider: 'Dr. James Okonkwo',
-    reason: 'Chest X-Ray — routine screening',
-    classCode: 'AMB',
-  },
-  {
-    id: 'enc-003',
-    type: 'Laboratory',
-    date: '2026-06-01T08:15:00Z',
-    status: 'finished',
-    facility: 'Boston Clinical Labs',
-    provider: 'Lab Services',
-    reason: 'Lipid panel & HbA1c',
-    classCode: 'VR',
-  },
-  {
-    id: 'enc-004',
-    type: 'Emergency',
-    date: '2025-11-22T19:40:00Z',
-    status: 'finished',
-    facility: 'Mass General Emergency Dept',
-    provider: 'Dr. Sarah Chen',
-    reason: 'Acute urinary symptoms — UTI workup',
-    classCode: 'EMER',
-  },
-  {
-    id: 'enc-005',
-    type: 'Ambulatory · Annual wellness',
-    date: '2025-04-10T09:00:00Z',
-    status: 'finished',
-    facility: 'Cambridge Family Medicine',
-    provider: 'Dr. Priya Nair',
-    reason: 'Annual physical & preventive screening',
-    classCode: 'AMB',
-  },
-];
+/** Mapped encounter rows from the backend `clinical.encounters` sample payload. */
+export const DUMMY_FHIR_ENCOUNTERS: EncounterRecord[] = MOCK_MAPPED_ENCOUNTERS;
 
 export function buildDummyHealthRecords(): HealthRecords {
   return {
     ...MOCK_HEALTH_RECORDS,
+    conditions: MOCK_MAPPED_CONDITIONS,
+    medications: MOCK_MAPPED_MEDICATIONS,
+    observations: MOCK_MAPPED_OBSERVATIONS,
     encounters: DUMMY_FHIR_ENCOUNTERS,
     lastScan: {
       title: 'Chest X-Ray',

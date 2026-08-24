@@ -43,13 +43,9 @@ export function useOnboardingGuard(mode: 'registration' | 'login' | 'portal') {
     const gatewayOk = hasGatewaySession(session.token);
 
     if (mode === 'registration') {
-      if (effectiveAccount?.isLoggedIn && gatewayOk) {
-        router.replace('/dashboard');
-        return;
-      }
-
-      if (isRegistrationComplete(effectiveAccount)) {
-        router.replace('/login');
+      // /register is always available so a new patient can start (or restart)
+      // even if this browser already has a completed local account.
+      if (pathname === '/register' || pathname.startsWith('/register/')) {
         return;
       }
 

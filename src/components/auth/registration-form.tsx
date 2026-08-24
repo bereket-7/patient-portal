@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -50,6 +51,7 @@ export function RegistrationForm() {
   const router = useRouter();
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [healthexNote, setHealthexNote] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -69,31 +71,10 @@ export function RegistrationForm() {
   async function onSubmit(values: FormValues) {
     setSubmitError(null);
     setHealthexNote(null);
+    setSubmitting(true);
 
-    const result = await registerDevPatientAccount({
-      firstName: values.firstName,
-      lastName: values.lastName,
-      dateOfBirth: values.dateOfBirth,
-      email: values.email,
-      phone: values.phone,
-      password: values.password,
-      gender: values.gender || undefined,
-      address: values.address || undefined,
-    });
-
-    if (result?.account) {
-      syncDevAccountToLocal(result.account, values.password);
-      if (result.healthexLinked) {
-        setHealthexNote(
-          `Linked to HealthEx (reference ${result.referenceId || result.account.healthExReferenceId}). HealthEx will email you to grant consent — medical data stays blocked until you approve and sync.`,
-        );
-      } else if (result.healthexError) {
-        setHealthexNote(
-          `Account created, but HealthEx link failed: ${result.healthexError}. You can retry on Connect.`,
-        );
-      }
-    } else {
-      register({
+    try {
+      const result = await registerDevPatientAccount({
         firstName: values.firstName,
         lastName: values.lastName,
         dateOfBirth: values.dateOfBirth,
@@ -103,12 +84,39 @@ export function RegistrationForm() {
         gender: values.gender || undefined,
         address: values.address || undefined,
       });
-      setSubmitError(
-        'Gateway registration unavailable — saved locally only. Start the API gateway with AUTH_DEV_MODE=true for HealthEx linking.',
-      );
-    }
 
-    router.push('/verify-email');
+      if (result?.account) {
+        syncDevAccountToLocal(result.account, values.password);
+        if (result.healthexLinked) {
+          setHealthexNote(
+            `Linked to HealthEx (reference ${result.referenceId || result.account.healthExReferenceId}). HealthEx will email you to grant consent — medical data stays blocked until you approve and sync.`,
+          );
+        } else if (result.healthexError) {
+          setHealthexNote(
+            `Account created, but HealthEx link failed: ${result.healthexError}. You can retry on Connect.`,
+          );
+        }
+      } else {
+        register({
+          firstName: values.firstName,
+          lastName: values.lastName,
+          dateOfBirth: values.dateOfBirth,
+          email: values.email,
+          phone: values.phone,
+          password: values.password,
+          gender: values.gender || undefined,
+          address: values.address || undefined,
+        });
+        setSubmitError(
+          'Gateway registration unavailable — saved locally only. Start the API gateway with AUTH_DEV_MODE=true for HealthEx linking.',
+        );
+      }
+
+      router.push('/verify-email');
+    } catch {
+      setSubmitError('Unable to create account. Try again.');
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -127,7 +135,7 @@ export function RegistrationForm() {
               <FormItem>
                 <FormLabel>First Name *</FormLabel>
                 <FormControl>
-                  <Input placeholder="John" {...field} />
+                  <Input placeholder="John" disabled={submitting} {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -140,7 +148,7 @@ export function RegistrationForm() {
               <FormItem>
                 <FormLabel>Last Name *</FormLabel>
                 <FormControl>
-                  <Input placeholder="Smith" {...field} />
+                  <Input placeholder="Smith" disabled={submitting} {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -155,7 +163,7 @@ export function RegistrationForm() {
             <FormItem>
               <FormLabel>Date of Birth *</FormLabel>
               <FormControl>
-                <Input type="date" {...field} />
+                <Input type="date" disabled={submitting} {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -169,7 +177,7 @@ export function RegistrationForm() {
             <FormItem>
               <FormLabel>Email Address *</FormLabel>
               <FormControl>
-                <Input type="email" placeholder="john@example.com" {...field} />
+                <Input type="email" placeholder="john@example.com" disabled={submitting} {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -183,7 +191,7 @@ export function RegistrationForm() {
             <FormItem>
               <FormLabel>Mobile Phone *</FormLabel>
               <FormControl>
-                <Input type="tel" placeholder="+1 (555) 000-0000" {...field} />
+                <Input type="tel" placeholder="+1 (555) 000-0000" disabled={submitting} {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -198,7 +206,7 @@ export function RegistrationForm() {
               <FormItem>
                 <FormLabel>Password *</FormLabel>
                 <FormControl>
-                  <Input type="password" {...field} />
+                  <Input type="password" disabled={submitting} {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -211,7 +219,7 @@ export function RegistrationForm() {
               <FormItem>
                 <FormLabel>Confirm Password *</FormLabel>
                 <FormControl>
-                  <Input type="password" {...field} />
+                  <Input type="password" disabled={submitting} {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -225,7 +233,7 @@ export function RegistrationForm() {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Gender (optional)</FormLabel>
-              <Select onValueChange={field.onChange} value={field.value}>
+              <Select onValueChange={field.onChange} value={field.value} disabled={submitting}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Select gender" />
@@ -250,15 +258,16 @@ export function RegistrationForm() {
             <FormItem>
               <FormLabel>Address (optional)</FormLabel>
               <FormControl>
-                <Textarea placeholder="Street, City, State, ZIP" rows={2} {...field} />
+                <Textarea placeholder="Street, City, State, ZIP" rows={2} disabled={submitting} {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
 
-        <Button type="submit" className="w-full">
-          Create Account
+        <Button type="submit" className="w-full gap-2" disabled={submitting}>
+          {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
+          {submitting ? 'Creating account…' : 'Create Account'}
         </Button>
       </form>
     </Form>

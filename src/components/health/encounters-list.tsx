@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { CalendarDays, ChevronRight, MapPin, Stethoscope, User } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { encounterClassLabel } from '@/lib/mock/backend-encounters';
 import type { EncounterRecord } from '@/lib/types/health-records';
 import { formatDateTime } from '@/lib/format-date';
 import { cn } from '@/lib/utils';
@@ -17,6 +18,7 @@ const statusVariant: Record<string, 'default' | 'secondary' | 'success' | 'warni
 
 function EncounterCard({ encounter }: { encounter: EncounterRecord }) {
   const statusKey = encounter.status?.toLowerCase() || 'finished';
+  const classLabel = encounterClassLabel(encounter.classCode);
   return (
     <Link href={`/health/visits/${encodeURIComponent(encounter.id)}`} className="block group">
       <Card className="overflow-hidden transition-shadow group-hover:shadow-md">
@@ -36,7 +38,7 @@ function EncounterCard({ encounter }: { encounter: EncounterRecord }) {
           {encounter.date && encounter.date !== '—'
             ? formatDateTime(encounter.date)
             : 'Date not recorded'}
-          {encounter.classCode ? ` · ${encounter.classCode}` : ''}
+          {classLabel ? ` · ${classLabel}` : ''}
         </p>
       </CardHeader>
       <CardContent className="space-y-3 text-sm">
