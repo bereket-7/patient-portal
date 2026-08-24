@@ -72,13 +72,14 @@ export default function ProviderSharePage() {
   return (
     <div className="min-h-screen bg-brand-gradient-soft">
       <header className="border-b bg-brand-gradient-header text-white shadow-sm">
-        <div className="mx-auto flex h-14 max-w-lg items-center justify-between px-4">
-          <span className="text-lg font-semibold tracking-tight">
+        <div className="mx-auto flex h-14 max-w-lg items-center justify-between gap-2 px-4">
+          <span className="min-w-0 truncate text-lg font-semibold tracking-tight">
             Trial<span className="font-light text-white/70">ClinIQ</span>
           </span>
-          <Badge variant="outline" className="gap-1 border-white/30 bg-white/10 text-white">
+          <Badge variant="outline" className="shrink-0 gap-1 border-white/30 bg-white/10 text-white">
             <Shield className="h-3 w-3" />
-            Provider access
+            <span className="sm:hidden">Provider</span>
+            <span className="hidden sm:inline">Provider access</span>
           </Badge>
         </div>
       </header>
@@ -146,7 +147,7 @@ export default function ProviderSharePage() {
                       onChange={(e) =>
                         setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))
                       }
-                      className="pl-10 font-mono text-lg tracking-[0.3em]"
+                      className="pl-10 font-mono text-lg tracking-[0.2em] sm:tracking-[0.3em]"
                     />
                   </div>
                   <p className="text-xs text-muted-foreground">

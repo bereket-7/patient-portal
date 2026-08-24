@@ -57,7 +57,7 @@ export function WelcomeLetterView() {
             </div>
           </div>
         </CardHeader>
-        <CardContent className="space-y-6 p-8 text-sm leading-relaxed">
+        <CardContent className="space-y-6 p-4 text-sm leading-relaxed sm:p-8">
           <p>{formatDateTime(new Date().toISOString())}</p>
 
           <p>Dear {getDisplayName(account)},</p>

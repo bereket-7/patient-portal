@@ -21,7 +21,7 @@ export function DetailPageFrame({
       <div className="overflow-hidden rounded-sm border border-border bg-card">
         <div className="h-1 bg-primary" />
         <div className="border-b border-border p-6 sm:p-8">
-          <h1 className="font-[family-name:var(--font-chart-display)] text-3xl font-semibold tracking-tight sm:text-4xl">
+          <h1 className="break-words font-[family-name:var(--font-chart-display)] text-2xl font-semibold tracking-tight sm:text-4xl">
             {title}
           </h1>
           {subtitle && <p className="mt-2 text-sm text-muted-foreground">{subtitle}</p>}
@@ -106,20 +106,32 @@ export function DetailKeyValueTable({
   rows: Array<{ label: string; value: string }>;
 }) {
   return (
-    <div className="overflow-hidden rounded-sm border border-border">
-      <table className="w-full text-left text-sm">
-        <tbody>
-          {rows.map((row) => (
-            <tr key={row.label} className="border-b border-border last:border-b-0">
-              <th className="w-[40%] bg-muted/40 px-4 py-2.5 text-[11px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
-                {row.label}
-              </th>
-              <td className="px-4 py-2.5">{row.value}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+    <>
+      <div className="overflow-hidden rounded-sm border border-border sm:hidden">
+        {rows.map((row) => (
+          <div key={row.label} className="border-b border-border px-4 py-2.5 last:border-b-0">
+            <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
+              {row.label}
+            </p>
+            <p className="mt-1 break-words text-sm">{row.value}</p>
+          </div>
+        ))}
+      </div>
+      <div className="hidden overflow-x-auto rounded-sm border border-border sm:block">
+        <table className="w-full text-left text-sm">
+          <tbody>
+            {rows.map((row) => (
+              <tr key={row.label} className="border-b border-border last:border-b-0">
+                <th className="w-[40%] bg-muted/40 px-4 py-2.5 text-[11px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
+                  {row.label}
+                </th>
+                <td className="break-words px-4 py-2.5">{row.value}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </>
   );
 }
 

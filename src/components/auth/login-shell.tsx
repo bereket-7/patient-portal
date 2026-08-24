@@ -27,7 +27,7 @@ export function LoginShell({ children }: { children: React.ReactNode }) {
         />
 
         <div className="relative z-10 mx-auto flex w-full max-w-6xl flex-col lg:flex-row lg:items-stretch">
-          <aside className="flex flex-1 flex-col justify-between px-8 py-10 text-white lg:px-14 lg:py-16">
+          <aside className="flex flex-1 flex-col justify-between px-6 py-8 text-white sm:px-8 lg:px-14 lg:py-16">
             <div>
               <div className="flex items-center gap-2.5">
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/20 ring-1 ring-primary/30">
@@ -80,8 +80,8 @@ export function LoginShell({ children }: { children: React.ReactNode }) {
             </p>
           </aside>
 
-          <section className="flex flex-1 items-center justify-center px-6 pb-12 lg:px-10 lg:py-16">
-            <div className="w-full max-w-md rounded-2xl border border-white/10 bg-white/95 p-8 shadow-2xl shadow-black/40 backdrop-blur">
+          <section className="flex flex-1 items-center justify-center px-4 pb-10 sm:px-6 lg:px-10 lg:py-16">
+            <div className="w-full max-w-md rounded-2xl border border-white/10 bg-white/95 p-5 shadow-2xl shadow-black/40 backdrop-blur sm:p-8">
               {children}
             </div>
           </section>

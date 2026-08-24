@@ -28,12 +28,12 @@ export function DashboardHealthPreview({
       aria-label="Health summary preview"
       className="relative space-y-4 overflow-hidden rounded-2xl border border-primary/15 bg-gradient-to-b from-accent/40 via-card to-card p-4 shadow-sm sm:p-6"
     >
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/60 pb-4">
-        <div className="flex items-center gap-3">
+      <div className="flex flex-col gap-3 border-b border-border/60 pb-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+        <div className="flex min-w-0 items-start gap-3">
           <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
             <Lock className="h-5 w-5" />
           </div>
-          <div>
+          <div className="min-w-0">
             <p className="text-xs font-medium uppercase tracking-[0.12em] text-primary/70">
               Preview
             </p>
@@ -41,7 +41,7 @@ export function DashboardHealthPreview({
             <p className="mt-0.5 max-w-xl text-sm text-muted-foreground">{message}</p>
           </div>
         </div>
-        <Button asChild size="sm" className="gap-2 shrink-0">
+        <Button asChild size="sm" className="w-full shrink-0 gap-2 sm:w-auto">
           <Link href={ctaHref}>
             <Link2 className="h-4 w-4" />
             {ctaLabel}

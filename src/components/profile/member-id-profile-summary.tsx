@@ -116,7 +116,7 @@ export function MemberIdProfileSummary() {
               <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 TrialClinIQ Member ID
               </p>
-              <p className="mt-1 font-mono text-xl font-semibold text-primary">{memberId}</p>
+              <p className="mt-1 break-all font-mono text-lg font-semibold text-primary sm:text-xl">{memberId}</p>
               {enrolledAt ? (
                 <p className="mt-2 text-xs text-muted-foreground">
                   Member since {formatDateTime(enrolledAt)}
@@ -138,7 +138,7 @@ export function MemberIdProfileSummary() {
               Provider verify
             </div>
             {loading ? (
-              <div className="h-[180px] w-[180px] animate-pulse rounded-lg bg-muted" />
+              <div className="aspect-square w-full max-w-[180px] animate-pulse rounded-lg bg-muted" />
             ) : (
               <ShareQrCode value={verifyUrl} size={180} />
             )}

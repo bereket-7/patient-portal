@@ -18,7 +18,7 @@ export function PortalShell({ children }: { children: React.ReactNode }) {
       <div className="flex min-h-screen flex-col bg-brand-gradient-soft">
         <DemoModeBanner />
         <PortalHeader />
-        <main className="mx-auto w-full max-w-[1400px] flex-1 p-4 lg:p-6">{children}</main>
+        <main className="mx-auto w-full min-w-0 max-w-[1400px] flex-1 p-3 sm:p-4 lg:p-6">{children}</main>
         <PortalFooter />
       </div>
     </OnboardingGuard>

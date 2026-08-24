@@ -24,8 +24,8 @@ export function DemoModeBanner() {
 
   return (
     <div className="border-b border-amber-200 bg-amber-50 px-4 py-2 text-amber-950">
-      <div className="mx-auto flex max-w-[1400px] items-center justify-between gap-3">
-        <p className="text-sm">
+      <div className="mx-auto flex max-w-[1400px] items-start justify-between gap-3 sm:items-center">
+        <p className="min-w-0 text-sm leading-relaxed">
           {demoMode && (
             <>
               <span className="font-medium">Demo mode</span>

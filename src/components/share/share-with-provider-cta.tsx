@@ -9,12 +9,12 @@ export function ShareWithProviderCta() {
   return (
     <Card className="border-primary/20 bg-gradient-to-br from-white via-white to-accent">
       <CardHeader>
-        <div className="flex items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+        <div className="flex items-start gap-3">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary/10">
             <QrCode className="h-6 w-6 text-primary" />
           </div>
-          <div>
-            <CardTitle className="text-xl">Share with a provider</CardTitle>
+          <div className="min-w-0">
+            <CardTitle className="text-lg sm:text-xl">Share with a provider</CardTitle>
             <CardDescription>
               Generate a time-limited QR code so your care team can view a clinical summary — no
               clipboard paperwork.
@@ -30,7 +30,7 @@ export function ShareWithProviderCta() {
             any time.
           </p>
         </div>
-        <Button asChild size="lg">
+        <Button asChild size="lg" className="w-full sm:w-auto">
           <Link href="/share">Create share QR</Link>
         </Button>
       </CardContent>

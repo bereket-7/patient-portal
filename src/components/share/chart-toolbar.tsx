@@ -181,8 +181,8 @@ export function QuickFilterChips({
   onToggle: (id: string) => void;
 }) {
   return (
-    <div className="flex flex-wrap gap-0 overflow-hidden rounded-sm border border-border bg-card">
-      {chips.map((chip, i) => {
+    <div className="flex flex-wrap gap-px overflow-hidden rounded-sm border border-border bg-border">
+      {chips.map((chip) => {
         const on = active.includes(chip.id);
         return (
           <button
@@ -190,11 +190,10 @@ export function QuickFilterChips({
             type="button"
             onClick={() => onToggle(chip.id)}
             className={cn(
-              'px-3.5 py-2 text-[11px] font-semibold uppercase tracking-[0.12em] transition-colors',
-              i > 0 && 'border-l border-border',
+              'bg-card px-3.5 py-2 text-[11px] font-semibold uppercase tracking-[0.12em] transition-colors',
               on
                 ? 'bg-primary text-primary-foreground'
-                : 'bg-transparent text-muted-foreground hover:bg-muted hover:text-foreground',
+                : 'text-muted-foreground hover:bg-muted hover:text-foreground',
             )}
           >
             {chip.label}

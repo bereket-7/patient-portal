@@ -12,17 +12,20 @@ export function RegistrationStepIndicator({
 
   return (
     <div className="mb-8 w-full max-w-md">
-      <div className="mb-3 flex justify-between text-xs text-muted-foreground">
+      <div className="mb-3 flex justify-between gap-2 text-[11px] text-muted-foreground sm:text-xs">
         {REGISTRATION_STEPS.map((s) => (
           <span
             key={s.step}
             className={cn(
-              "font-medium",
+              "min-w-0 truncate text-center font-medium",
               s.step === currentStep && "text-primary",
               s.step < currentStep && "text-green-600",
             )}
           >
-            {s.label}
+            <span className="sm:hidden">
+              {s.step === 1 ? "Account" : s.step === 2 ? "Email" : "Phone"}
+            </span>
+            <span className="hidden sm:inline">{s.label}</span>
           </span>
         ))}
       </div>

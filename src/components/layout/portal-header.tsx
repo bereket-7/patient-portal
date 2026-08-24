@@ -1,17 +1,23 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
+  Check,
   ChevronDown,
   CreditCard,
   FileText,
   Globe,
+  HelpCircle,
   LogOut,
   Menu,
+  Monitor,
+  Moon,
   ScrollText,
   Share2,
   Shield,
+  Sun,
   UserRound,
 } from "lucide-react";
 import { useAuth } from "@trialcliniq/shared-ui";
@@ -27,6 +33,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { HelpDialog } from "@/components/layout/help-dialog";
 import { NotificationsPanel } from "@/components/layout/notifications-panel";
+import { ThemeToggle } from "@/components/theme/theme-toggle";
+import { useTheme } from "@/components/theme/theme-provider";
+import type { ThemePreference } from "@/lib/theme";
 import {
   HEALTH_RECORD_NAV,
   PATIENT_PORTAL_NAV,
@@ -138,10 +147,18 @@ function NavLinks({
   );
 }
 
+const THEME_OPTIONS: { value: ThemePreference; label: string; icon: typeof Sun }[] = [
+  { value: "light", label: "Light", icon: Sun },
+  { value: "dark", label: "Dark", icon: Moon },
+  { value: "system", label: "System", icon: Monitor },
+];
+
 export function PortalHeader() {
   const { account, logout } = usePatientAccount();
   const { resetSession } = useAuth();
+  const { preference, setPreference } = useTheme();
   const router = useRouter();
+  const [helpOpen, setHelpOpen] = useState(false);
   const initials = account
     ? `${account.firstName[0]}${account.lastName[0]}`.toUpperCase()
     : "PT";
@@ -159,35 +176,20 @@ export function PortalHeader() {
 
   return (
     <header className="sticky top-0 z-40 bg-brand-gradient-header text-header-foreground shadow-md">
-      <div className="mx-auto flex h-14 max-w-[1400px] items-center justify-between px-4 lg:px-6">
-        <div className="flex items-center gap-4 md:gap-8">
-          <Link
-            href="/dashboard"
-            className="flex shrink-0 items-center gap-0.5"
-          >
-            <span className="text-xl font-bold tracking-tight text-white">
-              Trial
-            </span>
-            <span className="text-xl font-light tracking-tight text-white/70">
-              ClinIQ
-            </span>
-          </Link>
-
-          <NavLinks className="hidden items-center gap-1 md:flex" />
-        </div>
-
-        <div className="flex items-center gap-1">
+      <div className="mx-auto flex h-14 max-w-[1400px] items-center gap-2 px-3 sm:px-4 lg:px-6">
+        <div className="flex min-w-0 flex-1 items-center gap-1 sm:gap-3 md:gap-8">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
                 size="icon"
-                className="md:hidden text-white/80 hover:bg-white/10 hover:text-white"
+                className="shrink-0 md:hidden text-white/80 hover:bg-white/10 hover:text-white"
+                aria-label="Open menu"
               >
                 <Menu className="h-5 w-5" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-64">
+            <DropdownMenuContent align="start" className="w-[min(16rem,calc(100vw-1.5rem))]">
               <DropdownMenuLabel className="normal-case tracking-normal text-muted-foreground">
                 Menu
               </DropdownMenuLabel>
@@ -203,16 +205,56 @@ export function PortalHeader() {
                   Share with provider
                 </Link>
               </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => setHelpOpen(true)}>
+                <HelpCircle className="h-4 w-4" />
+                Help
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuLabel className="normal-case tracking-normal text-muted-foreground">
+                Appearance
+              </DropdownMenuLabel>
+              {THEME_OPTIONS.map((option) => {
+                const Icon = option.icon;
+                const selected = preference === option.value;
+                return (
+                  <DropdownMenuItem
+                    key={option.value}
+                    onSelect={() => setPreference(option.value)}
+                    className={selected ? "font-semibold" : undefined}
+                  >
+                    <Icon className="h-4 w-4" />
+                    <span className="flex-1">{option.label}</span>
+                    {selected ? <Check className="h-4 w-4 text-primary" /> : null}
+                  </DropdownMenuItem>
+                );
+              })}
             </DropdownMenuContent>
           </DropdownMenu>
 
+          <Link
+            href="/dashboard"
+            className="flex min-w-0 shrink items-center gap-0.5"
+          >
+            <span className="text-lg font-bold tracking-tight text-white sm:text-xl">
+              Trial
+            </span>
+            <span className="text-lg font-light tracking-tight text-white/70 sm:text-xl">
+              ClinIQ
+            </span>
+          </Link>
+
+          <NavLinks className="hidden min-w-0 items-center gap-1 md:flex" />
+        </div>
+
+        <div className="flex shrink-0 items-center gap-0.5 sm:gap-1">
+          <ThemeToggle className="hidden sm:inline-flex" />
           <NotificationsPanel />
           <Button
             asChild
             size="sm"
-            className="gap-1.5 bg-white text-primary shadow-sm hover:bg-white/90"
+            className="h-9 w-9 gap-1.5 bg-white p-0 text-primary shadow-sm hover:bg-white/90 sm:h-9 sm:w-auto sm:px-3"
           >
-            <Link href="/profile/share">
+            <Link href="/profile/share" aria-label="Share with provider">
               <Share2 className="h-4 w-4" />
               <span className="hidden sm:inline">Share</span>
             </Link>
@@ -226,26 +268,27 @@ export function PortalHeader() {
             EN
             <ChevronDown className="h-3 w-3" />
           </Button>
-          <HelpDialog />
+          <HelpDialog open={helpOpen} onOpenChange={setHelpOpen} />
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
-                className="gap-2 text-white/90 hover:bg-white/10 hover:text-white"
+                size="icon"
+                className="h-9 w-9 text-white/90 hover:bg-white/10 hover:text-white sm:h-9 sm:w-auto sm:gap-2 sm:px-3"
               >
                 <Avatar className="h-7 w-7">
                   <AvatarFallback className="bg-white/20 text-xs text-white">
                     {initials}
                   </AvatarFallback>
                 </Avatar>
-                <span className="hidden text-sm sm:inline">
+                <span className="hidden text-sm lg:inline">
                   {account ? getDisplayName(account) : "Patient"}
                 </span>
-                <ChevronDown className="h-3 w-3" />
+                <ChevronDown className="hidden h-3 w-3 sm:inline" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-64 p-0">
+            <DropdownMenuContent align="end" className="w-[min(16rem,calc(100vw-1.5rem))] p-0">
               <div className="border-b border-border/60 bg-gradient-to-br from-primary/5 to-accent/30 px-4 py-3">
                 <div className="flex items-center gap-3">
                   <Avatar className="h-10 w-10 ring-2 ring-primary/15">

@@ -36,9 +36,11 @@ export function ParticipationCard({ match }: { match: TrialMatch }) {
       </CardHeader>
       <CardContent className="space-y-4">
         <div>
-          <div className="mb-1.5 flex items-center justify-between text-xs">
-            <span className="text-muted-foreground">Enrollment progress</span>
-            <span className="font-medium">{ENROLLMENT_STAGE_LABELS[match.currentStage]}</span>
+          <div className="mb-1.5 flex items-center justify-between gap-2 text-xs">
+            <span className="shrink-0 text-muted-foreground">Enrollment progress</span>
+            <span className="min-w-0 truncate text-right font-medium">
+              {ENROLLMENT_STAGE_LABELS[match.currentStage]}
+            </span>
           </div>
           <Progress value={progress} className="h-2" />
         </div>

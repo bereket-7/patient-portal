@@ -70,16 +70,16 @@ export function QrCodeDisplay({
 
   return (
     <div className={cn('flex flex-col items-center gap-4', className)}>
-      <div className="relative overflow-hidden rounded-2xl border bg-white p-5 shadow-sm">
+      <div className="relative w-full max-w-[240px] overflow-hidden rounded-2xl border bg-white p-4 shadow-sm sm:p-5">
         <div className="pointer-events-none absolute inset-x-0 top-0 h-1 bg-primary" />
         {dataUrl ? (
           <img
             src={dataUrl}
             alt="Provider share QR code"
-            className="h-[240px] w-[240px]"
+            className="h-auto w-full"
           />
         ) : (
-          <div className="flex h-[240px] w-[240px] items-center justify-center text-muted-foreground">
+          <div className="flex aspect-square w-full items-center justify-center text-muted-foreground">
             <Loader2 className="h-8 w-8 animate-spin" />
           </div>
         )}

@@ -99,7 +99,7 @@ export function PhoneOtpForm() {
         </AlertDescription>
       </Alert>
 
-      <div className="flex justify-center gap-2">
+      <div className="flex justify-center gap-1 sm:gap-2">
         {digits.map((digit, i) => (
           <Input
             key={i}
@@ -113,7 +113,7 @@ export function PhoneOtpForm() {
             onChange={(e) => handleChange(i, e.target.value)}
             onKeyDown={(e) => handleKeyDown(i, e)}
             onPaste={handlePaste}
-            className="h-12 w-11 text-center text-lg font-semibold"
+            className="h-11 w-9 px-0 text-center text-lg font-semibold sm:h-12 sm:w-11"
           />
         ))}
       </div>

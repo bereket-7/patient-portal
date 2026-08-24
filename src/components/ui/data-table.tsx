@@ -51,6 +51,26 @@ type DataTableProps<TData, TValue> = {
   initialPageSize?: number;
 };
 
+function visiblePageIndexes(pageIndex: number, pageCount: number, windowSize = 5): number[] {
+  const count = Math.max(pageCount, 1);
+  if (count <= windowSize) {
+    return Array.from({ length: count }, (_, i) => i);
+  }
+  const half = Math.floor(windowSize / 2);
+  let start = Math.max(0, pageIndex - half);
+  const end = Math.min(count, start + windowSize);
+  start = Math.max(0, end - windowSize);
+  return Array.from({ length: end - start }, (_, i) => start + i);
+}
+
+function columnLabel(columnId: string): string {
+  if (columnId === 'select') return '';
+  return columnId
+    .replace(/[_-]+/g, ' ')
+    .replace(/([a-z])([A-Z])/g, '$1 $2')
+    .replace(/^\w/, (c) => c.toUpperCase());
+}
+
 function createSelectColumn<TData, TValue>(): ColumnDef<TData, TValue> {
   return {
     id: 'select',
@@ -158,7 +178,7 @@ export function DataTable<TData, TValue>({
   return (
     <div className={cn('space-y-3', className)}>
       <div className="flex flex-col gap-3 px-4 pt-1 sm:flex-row sm:flex-wrap sm:items-center">
-        <div className="relative min-w-[200px] flex-1">
+        <div className="relative min-w-0 flex-1">
           <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={globalFilter}
@@ -214,7 +234,39 @@ export function DataTable<TData, TValue>({
         </div>
       )}
 
-      <div className="overflow-x-auto">
+      <div className="space-y-3 px-4 md:hidden">
+        {table.getRowModel().rows.length ? (
+          table.getRowModel().rows.map((row) => (
+            <div
+              key={row.id}
+              className="space-y-2 rounded-lg border bg-card p-3"
+              data-state={row.getIsSelected() && 'selected'}
+            >
+              {row.getVisibleCells().map((cell) =>
+                cell.column.id === 'select' ? (
+                  <div key={cell.id} className="flex items-center justify-between">
+                    <span className="text-xs text-muted-foreground">Select</span>
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                  </div>
+                ) : (
+                  <div key={cell.id} className="flex items-start justify-between gap-3 text-sm">
+                    <span className="shrink-0 pt-0.5 text-xs text-muted-foreground">
+                      {columnLabel(cell.column.id)}
+                    </span>
+                    <div className="min-w-0 text-right">
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    </div>
+                  </div>
+                ),
+              )}
+            </div>
+          ))
+        ) : (
+          <p className="py-8 text-center text-sm text-muted-foreground">{emptyMessage}</p>
+        )}
+      </div>
+
+      <div className="hidden overflow-x-auto md:block">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -260,12 +312,12 @@ export function DataTable<TData, TValue>({
         </Table>
       </div>
 
-      <div className="flex flex-col gap-3 border-t px-4 py-3 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
-        <span>
+      <div className="flex flex-col gap-3 border-t px-4 py-3 text-xs text-muted-foreground sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+        <span className="text-center sm:text-left">
           Page {pageCount === 0 ? 0 : pageIndex + 1} of {Math.max(pageCount, 1)} ({filteredCount}{' '}
           items)
         </span>
-        <div className="flex items-center gap-1">
+        <div className="flex flex-wrap items-center justify-center gap-1">
           <Button
             variant="outline"
             size="icon"
@@ -275,7 +327,7 @@ export function DataTable<TData, TValue>({
           >
             <ChevronLeft className="h-4 w-4" />
           </Button>
-          {Array.from({ length: Math.max(pageCount, 1) }, (_, i) => i).map((p) => (
+          {visiblePageIndexes(pageIndex, pageCount).map((p) => (
             <Button
               key={p}
               variant={p === pageIndex ? 'default' : 'outline'}
@@ -297,7 +349,7 @@ export function DataTable<TData, TValue>({
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center justify-center gap-2 sm:justify-end">
           <span>Page size</span>
           <Select
             value={String(pageSize)}

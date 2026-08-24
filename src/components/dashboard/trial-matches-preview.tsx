@@ -33,9 +33,11 @@ export function TrialMatchesPreview({ matches }: { matches: TrialMatch[] }) {
             href={`/trials/${match.id}`}
             className="block rounded-lg border p-3 transition-colors hover:border-primary/30 hover:bg-accent/30"
           >
-            <div className="flex items-start justify-between gap-2">
-              <p className="text-sm font-medium leading-snug">{match.trialName}</p>
-              <Badge variant={statusVariant[match.status]}>{match.status}</Badge>
+            <div className="flex min-w-0 items-start justify-between gap-2">
+              <p className="min-w-0 text-sm font-medium leading-snug">{match.trialName}</p>
+              <Badge variant={statusVariant[match.status]} className="shrink-0">
+                {match.status}
+              </Badge>
             </div>
             <p className="mt-1 text-xs text-muted-foreground">{match.sponsor}</p>
             <p className="mt-2 text-xs font-medium text-primary">

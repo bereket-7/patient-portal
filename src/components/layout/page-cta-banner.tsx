@@ -109,11 +109,11 @@ export function PageCtaBanner({
           >
             {description}
           </p>
-          <div className="flex flex-wrap gap-3 pt-1">
+          <div className="flex w-full flex-col gap-3 pt-1 sm:w-auto sm:flex-row sm:flex-wrap">
             <Button
               asChild
               size="lg"
-              className="bg-white text-primary hover:bg-white/90"
+              className="w-full bg-white text-primary hover:bg-white/90 sm:w-auto"
             >
               <Link href={ctaHref}>
                 {ctaLabel}
@@ -125,7 +125,7 @@ export function PageCtaBanner({
                 asChild
                 size="lg"
                 variant="outline"
-                className={styles.secondary}
+                className={cn("w-full sm:w-auto", styles.secondary)}
               >
                 <Link href={secondaryHref}>{secondaryLabel}</Link>
               </Button>

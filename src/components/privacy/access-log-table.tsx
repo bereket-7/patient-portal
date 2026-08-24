@@ -35,7 +35,7 @@ const columns: ColumnDef<AccessLogEntry>[] = [
     accessorKey: 'timestamp',
     header: ({ column }) => <SortableHeader column={column} title="Date / Time" />,
     cell: ({ row }) => (
-      <span className="whitespace-nowrap text-sm">
+      <span className="text-sm sm:whitespace-nowrap">
         {formatDateTime(row.getValue('timestamp'))}
       </span>
     ),
@@ -149,9 +149,9 @@ export function AccessLogTable() {
           <CardTitle className="text-base">Access events</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4 p-0 pb-2">
-          <div className="px-4 pt-1">
+          <div className="overflow-x-auto px-4 pt-1">
             <Tabs value={tab} onValueChange={setTab}>
-              <TabsList>
+              <TabsList className="min-w-max">
                 {FILTER_TABS.map((t) => (
                   <TabsTrigger key={t.value} value={t.value}>
                     {t.label}

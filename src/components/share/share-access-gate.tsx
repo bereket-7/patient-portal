@@ -88,7 +88,7 @@ function OtpInputs({
 
   return (
     <div
-      className={cn('flex justify-center gap-2', error && 'animate-otp-shake')}
+      className={cn('flex justify-center gap-1 sm:gap-2', error && 'animate-otp-shake')}
       role="group"
       aria-label="One-time passcode"
     >
@@ -108,7 +108,7 @@ function OtpInputs({
           onPaste={onPaste}
           onFocus={(e) => e.target.select()}
           className={cn(
-            'h-12 w-10 rounded-sm border bg-background text-center text-lg font-semibold tabular-nums outline-none transition-colors duration-150 sm:h-13 sm:w-11',
+            'h-11 w-8 rounded-sm border bg-background text-center text-lg font-semibold tabular-nums outline-none transition-colors duration-150 sm:h-12 sm:w-10',
             'focus:border-primary focus:ring-1 focus:ring-primary/30',
             digit ? 'border-primary text-foreground' : 'border-border text-foreground',
             error && 'border-destructive text-destructive',

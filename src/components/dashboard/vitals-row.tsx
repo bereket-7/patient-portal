@@ -15,17 +15,17 @@ function VitalCard({ vital }: { vital: VitalMetric }) {
   return (
     <Card className="overflow-hidden">
       <CardContent className="p-0">
-        <div className="p-4 pb-3">
+        <div className="p-3 pb-2 sm:p-4 sm:pb-3">
           <div className="flex items-center justify-between text-xs text-muted-foreground">
             <span>Self</span>
             <span>{vital.date}</span>
           </div>
-          <p className="mt-2 text-2xl font-bold tracking-tight">
+          <p className="mt-2 text-xl font-bold tracking-tight sm:text-2xl">
             {vital.value}
             <span className="ml-1 text-sm font-normal text-muted-foreground">{vital.unit}</span>
           </p>
         </div>
-        <div className={cn('px-4 py-2 text-center text-xs font-medium text-white', vital.color)}>
+        <div className={cn('px-2 py-2 text-center text-[11px] font-medium text-white sm:px-4 sm:text-xs', vital.color)}>
           {vital.label}
         </div>
       </CardContent>
@@ -37,14 +37,14 @@ function VitalEmptyCard({ slot }: { slot: (typeof VITAL_SLOTS)[number] }) {
   return (
     <Card className="overflow-hidden border-dashed border-muted-foreground/25 bg-muted/10">
       <CardContent className="p-0">
-        <div className="p-4 pb-3">
+        <div className="p-3 pb-2 sm:p-4 sm:pb-3">
           <div className="flex items-center justify-between text-xs text-muted-foreground">
             <span>Self</span>
             <span>—</span>
           </div>
-          <p className="mt-2 text-2xl font-bold tracking-tight text-muted-foreground/40">—</p>
+          <p className="mt-2 text-xl font-bold tracking-tight text-muted-foreground/40 sm:text-2xl">—</p>
         </div>
-        <div className={cn('px-4 py-2 text-center text-xs font-medium text-white/90', slot.color)}>
+        <div className={cn('px-2 py-2 text-center text-[11px] font-medium text-white/90 sm:px-4 sm:text-xs', slot.color)}>
           {slot.label}
         </div>
       </CardContent>

@@ -30,7 +30,7 @@ export function MedicationSpotlight({
       )}
     >
       <div className={cn('grid gap-0', compact ? 'lg:grid-cols-1' : 'lg:grid-cols-[1.2fr_0.8fr]')}>
-        <div className="space-y-5 p-6 sm:p-8">
+        <div className="space-y-5 p-4 sm:p-8">
           <div className="flex items-start gap-3">
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
               <Pill className="h-5 w-5" />

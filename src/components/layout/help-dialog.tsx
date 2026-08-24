@@ -35,18 +35,35 @@ const FAQ = [
   },
 ];
 
-export function HelpDialog() {
-  const [open, setOpen] = useState(false);
+export function HelpDialog({
+  open,
+  onOpenChange,
+  showTrigger = true,
+}: {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  showTrigger?: boolean;
+}) {
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
+  const isControlled = open !== undefined;
+  const dialogOpen = isControlled ? open : uncontrolledOpen;
+  const setDialogOpen = isControlled ? onOpenChange : setUncontrolledOpen;
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="ghost" size="icon" className="hidden text-white/80 hover:bg-white/10 hover:text-white sm:flex">
-          <HelpCircle className="h-4 w-4" />
-          <span className="sr-only">Help</span>
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="max-h-[85vh] overflow-y-auto">
+    <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+      {showTrigger ? (
+        <DialogTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="hidden text-white/80 hover:bg-white/10 hover:text-white sm:flex"
+          >
+            <HelpCircle className="h-4 w-4" />
+            <span className="sr-only">Help</span>
+          </Button>
+        </DialogTrigger>
+      ) : null}
+      <DialogContent className="max-h-[85vh] w-[calc(100%-2rem)] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Patient Portal Help</DialogTitle>
           <DialogDescription>Common questions about TrialClinIQ and your health data.</DialogDescription>

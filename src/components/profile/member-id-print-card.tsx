@@ -31,19 +31,19 @@ export function MemberIdPrintCard({
       )}
       aria-label="TrialClinIQ digital member ID card"
     >
-      <header className="relative overflow-hidden bg-gradient-to-r from-[#115e59] via-[#0f766e] to-[#14b8a6] px-6 py-5 text-white">
+      <header className="relative overflow-hidden bg-gradient-to-r from-[#115e59] via-[#0f766e] to-[#14b8a6] px-4 py-4 text-white sm:px-6 sm:py-5">
         <div className="absolute inset-0 bg-[linear-gradient(120deg,transparent_40%,rgba(255,255,255,0.08)_50%,transparent_60%)]" />
-        <div className="relative flex items-center justify-between gap-3">
-          <h2 className="text-lg font-semibold tracking-tight sm:text-xl">
+        <div className="relative flex flex-wrap items-center justify-between gap-2">
+          <h2 className="min-w-0 text-base font-semibold tracking-tight sm:text-xl">
             TrialClinIQ Member ID
           </h2>
-          <span className="rounded-full border border-white/35 bg-white/15 px-3 py-1 text-xs font-semibold tracking-wide">
+          <span className="shrink-0 rounded-full border border-white/35 bg-white/15 px-3 py-1 text-xs font-semibold tracking-wide">
             Research Member
           </span>
         </div>
       </header>
 
-      <div className="relative bg-white px-6 py-6 sm:px-8 sm:py-7">
+      <div className="relative bg-white px-4 py-5 sm:px-8 sm:py-7">
         <div
           className="pointer-events-none absolute inset-0 opacity-[0.35]"
           aria-hidden
@@ -74,7 +74,7 @@ export function MemberIdPrintCard({
               <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#6b7280]">
                 Member ID
               </p>
-              <p className="mt-2 font-mono text-2xl font-bold tracking-tight text-[#0f766e] sm:text-3xl">
+              <p className="mt-2 break-all font-mono text-xl font-bold tracking-tight text-[#0f766e] sm:text-3xl">
                 {memberId}
               </p>
             </div>
@@ -86,9 +86,9 @@ export function MemberIdPrintCard({
             ) : null}
           </div>
 
-          <div className="flex flex-col items-center gap-2 rounded-xl border border-[#d1e3df] bg-white p-4 shadow-sm">
+          <div className="mx-auto flex w-full max-w-[208px] flex-col items-center gap-2 rounded-xl border border-[#d1e3df] bg-white p-3 shadow-sm sm:p-4">
             {loading ? (
-              <div className="h-[192px] w-[192px] animate-pulse rounded-lg bg-[#ecfdf5]" />
+              <div className="aspect-square w-full max-w-[192px] animate-pulse rounded-lg bg-[#ecfdf5]" />
             ) : (
               <ShareQrCode value={verifyUrl} size={176} className="!p-1" />
             )}

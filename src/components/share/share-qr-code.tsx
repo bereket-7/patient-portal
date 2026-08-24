@@ -15,10 +15,9 @@ export function ShareQrCode({ value, size = 220, className }: ShareQrCodeProps) 
     return (
       <div
         className={cn(
-          'flex items-center justify-center rounded-lg bg-muted/30 text-xs text-muted-foreground',
+          'flex aspect-square w-full min-w-0 items-center justify-center rounded-lg bg-muted/30 text-xs text-muted-foreground',
           className,
         )}
-        style={{ width: size, height: size }}
       >
         No link yet
       </div>
@@ -27,8 +26,10 @@ export function ShareQrCode({ value, size = 220, className }: ShareQrCodeProps) 
 
   return (
     <div
-      className={cn('rounded-lg bg-white p-2', className)}
-      style={{ width: size + 16, height: size + 16 }}
+      className={cn(
+        'aspect-square w-full min-w-0 overflow-hidden rounded-lg bg-white p-1.5 sm:p-2 [&>svg]:!h-auto [&>svg]:!w-full [&>svg]:!max-w-full [&>svg]:min-w-0',
+        className,
+      )}
     >
       <QRCode
         value={value}
@@ -36,7 +37,7 @@ export function ShareQrCode({ value, size = 220, className }: ShareQrCodeProps) 
         level="M"
         bgColor="#ffffff"
         fgColor="#0f766e"
-        style={{ height: 'auto', maxWidth: '100%', width: '100%' }}
+        style={{ width: '100%', height: 'auto' }}
         viewBox={`0 0 ${size} ${size}`}
       />
     </div>

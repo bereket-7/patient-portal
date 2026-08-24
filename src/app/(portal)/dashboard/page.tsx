@@ -225,7 +225,7 @@ export default function DashboardPage() {
               {summary.enrolled > 0 && (
                 <span className="text-green-700">{summary.enrolled} enrolled</span>
               )}
-              <Link href="/participation" className="ml-auto text-primary hover:underline">
+              <Link href="/participation" className="text-primary hover:underline sm:ml-auto">
                 View all
               </Link>
             </div>

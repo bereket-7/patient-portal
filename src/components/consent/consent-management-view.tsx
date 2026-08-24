@@ -134,7 +134,7 @@ export function ConsentManagementView() {
             {account.consentReferenceId && (
               <div className="sm:col-span-2">
                 <p className="text-xs text-muted-foreground">Consent reference</p>
-                <p className="font-mono text-xs">{account.consentReferenceId}</p>
+                <p className="break-all font-mono text-xs">{account.consentReferenceId}</p>
               </div>
             )}
             {account.consentGrantedAt && (

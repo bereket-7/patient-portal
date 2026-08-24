@@ -146,18 +146,18 @@ export default function ProfileSharePage() {
         </Link>
       </Button>
 
-      <div className="overflow-hidden rounded-2xl border border-primary/15 bg-brand-gradient-soft shadow-sm">
-        <div className="grid gap-0 lg:grid-cols-[1fr_1.1fr]">
-          <div className="space-y-5 bg-brand-gradient-panel p-6 text-primary-foreground sm:p-8 lg:p-10">
-            <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/15 ring-1 ring-white/25">
+      <div className="min-w-0 overflow-hidden rounded-2xl border border-primary/15 bg-brand-gradient-soft shadow-sm">
+        <div className="grid min-w-0 gap-0 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
+          <div className="min-w-0 space-y-5 bg-brand-gradient-panel p-4 text-primary-foreground sm:p-8 lg:p-10">
+            <div className="flex items-start gap-3">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white/15 ring-1 ring-white/25">
                 <Share2 className="h-6 w-6" />
               </div>
-              <div>
+              <div className="min-w-0">
                 <p className="text-xs font-medium uppercase tracking-[0.14em] text-teal-100/90">
                   Secure share
                 </p>
-                <h1 className="text-2xl font-semibold tracking-tight">
+                <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">
                   Share patient information
                 </h1>
               </div>
@@ -190,12 +190,12 @@ export default function ProfileSharePage() {
               </li>
             </ol>
 
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
               {!session?.otp ? (
                 <Button
                   onClick={() => void handleCreate()}
                   disabled={loading}
-                  className="gap-2 bg-white text-primary hover:bg-white/90"
+                  className="w-full gap-2 bg-white text-primary hover:bg-white/90 sm:w-auto"
                 >
                   {loading ? (
                     <RefreshCw className="h-4 w-4 animate-spin" />
@@ -210,7 +210,7 @@ export default function ProfileSharePage() {
                     variant="outline"
                     onClick={() => void handleCreate()}
                     disabled={loading}
-                    className="gap-2 border-white/30 bg-transparent text-white hover:bg-white/10 hover:text-white"
+                    className="w-full gap-2 border-white/30 bg-transparent text-white hover:bg-white/10 hover:text-white sm:w-auto"
                   >
                     <RefreshCw className="h-4 w-4" />
                     New code
@@ -218,7 +218,7 @@ export default function ProfileSharePage() {
                   <Button
                     variant="destructive"
                     onClick={() => void handleRevoke()}
-                    className="bg-white/10 text-white hover:bg-white/20"
+                    className="w-full bg-white/10 text-white hover:bg-white/20 sm:w-auto"
                   >
                     Revoke access
                   </Button>
@@ -227,9 +227,9 @@ export default function ProfileSharePage() {
             </div>
           </div>
 
-          <div className="border-t bg-card/80 p-6 sm:p-8 lg:border-l lg:border-t-0">
+          <div className="min-w-0 border-t bg-card/80 p-4 sm:p-8 lg:border-l lg:border-t-0">
             {!session?.otp ? (
-              <div className="flex h-full min-h-[320px] flex-col items-center justify-center rounded-xl border border-dashed border-muted-foreground/30 bg-muted/20 p-8 text-center">
+              <div className="flex h-full min-h-[240px] flex-col items-center justify-center rounded-xl border border-dashed border-muted-foreground/30 bg-muted/20 p-4 text-center sm:min-h-[320px] sm:p-8">
                 {loading ? (
                   <>
                     <RefreshCw className="mb-4 h-12 w-12 animate-spin text-primary/60" />
@@ -250,7 +250,7 @@ export default function ProfileSharePage() {
                     <Button
                       onClick={() => void handleCreate()}
                       disabled={loading}
-                      className="mt-6 gap-2 bg-brand-gradient-button shadow-sm"
+                      className="mt-6 w-full max-w-xs gap-2 bg-brand-gradient-button shadow-sm"
                     >
                       <QrCode className="h-4 w-4" />
                       Generate share link & OTP
@@ -259,7 +259,7 @@ export default function ProfileSharePage() {
                 )}
               </div>
             ) : (
-              <div className="space-y-6">
+              <div className="min-w-0 space-y-6">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <Badge variant="outline" className="gap-1">
                     <Clock className="h-3 w-3" />
@@ -270,11 +270,11 @@ export default function ProfileSharePage() {
                   )}
                 </div>
 
-                <div className="mx-auto flex max-w-[260px] flex-col items-center gap-4">
-                  <div className="rounded-2xl border border-primary/15 bg-white p-3 shadow-sm ring-1 ring-primary/5">
+                <div className="mx-auto flex w-full min-w-0 max-w-[min(100%,16.5rem)] flex-col items-center gap-4">
+                  <div className="w-full min-w-0 overflow-hidden rounded-2xl border border-primary/15 bg-white p-2 shadow-sm ring-1 ring-primary/5 sm:p-3">
                     <ShareQrCode value={shareUrl} size={220} />
                   </div>
-                  <p className="text-center text-xs text-muted-foreground">
+                  <p className="px-1 text-center text-xs text-muted-foreground">
                     Provider scans to open secure share page for{" "}
                     <span className="font-medium text-foreground">
                       {getDisplayName(account)}
@@ -282,7 +282,7 @@ export default function ProfileSharePage() {
                   </p>
                 </div>
 
-                <Card className="border-primary/20 bg-primary/[0.04]">
+                <Card className="min-w-0 border-primary/20 bg-primary/[0.04]">
                   <CardHeader className="pb-2">
                     <CardTitle className="text-sm font-medium">
                       Your authorization code (OTP)
@@ -292,15 +292,15 @@ export default function ProfileSharePage() {
                       text.
                     </CardDescription>
                   </CardHeader>
-                  <CardContent className="flex flex-wrap items-center justify-between gap-3">
-                    <p className="font-mono text-4xl font-bold tracking-[0.35em] text-primary">
+                  <CardContent className="flex flex-col items-stretch gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+                    <p className="min-w-0 break-all font-mono text-2xl font-bold tracking-[0.18em] text-primary sm:text-4xl sm:tracking-[0.35em]">
                       {session.otp}
                     </p>
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={copyOtp}
-                      className="gap-1"
+                      className="w-full shrink-0 gap-1 sm:w-auto"
                     >
                       <Copy className="h-3.5 w-3.5" />
                       Copy OTP
@@ -308,21 +308,22 @@ export default function ProfileSharePage() {
                   </CardContent>
                 </Card>
 
-                <div className="space-y-2">
+                <div className="min-w-0 space-y-2">
                   <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                     Share link
                   </p>
-                  <div className="flex gap-2">
-                    <div className="min-w-0 flex-1 truncate rounded-lg border bg-muted/30 px-3 py-2 font-mono text-xs">
+                  <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-start">
+                    <div className="min-w-0 flex-1 overflow-hidden break-all rounded-lg border bg-muted/30 px-3 py-2 font-mono text-[11px] leading-relaxed sm:truncate sm:break-normal sm:text-xs sm:leading-normal">
                       {shareUrl}
                     </div>
                     <Button
                       variant="outline"
-                      size="icon"
                       onClick={copyLink}
                       aria-label="Copy link"
+                      className="w-full shrink-0 gap-1.5 sm:h-9 sm:w-9 sm:p-0"
                     >
                       <Link2 className="h-4 w-4" />
+                      <span className="sm:hidden">Copy link</span>
                     </Button>
                   </div>
                 </div>

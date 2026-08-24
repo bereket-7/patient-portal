@@ -73,8 +73,8 @@ export function ProviderChartShell({
   return (
     <div className="min-h-screen bg-background text-foreground">
       <header className="border-b border-border bg-header text-header-foreground">
-        <div className="mx-auto flex h-12 max-w-[1200px] items-center justify-between px-5 sm:px-8">
-          <p className="text-[13px] tracking-[0.08em]">
+        <div className="mx-auto flex min-h-12 max-w-[1200px] flex-col items-start justify-center gap-1 px-4 py-2 sm:flex-row sm:items-center sm:justify-between sm:px-8">
+          <p className="min-w-0 max-w-full truncate text-[13px] tracking-[0.08em]">
             <span className="font-semibold">TrialClinIQ</span>
             <span className="mx-2 opacity-40">/</span>
             <span className="opacity-70">Shared chart</span>
@@ -86,14 +86,14 @@ export function ProviderChartShell({
             )}
           </p>
           {state.status === 'ok' && verified && (
-            <p className="text-[12px] tabular-nums tracking-wide opacity-70">
+            <p className="shrink-0 text-[12px] tabular-nums tracking-wide opacity-70">
               {sharePermissionLabel(state.payload.permission)} · ends {formatExpiry(state.payload.exp)}
             </p>
           )}
         </div>
       </header>
 
-      <main className="mx-auto max-w-[1200px] px-5 py-8 sm:px-8 sm:py-10">
+      <main className="mx-auto max-w-[1200px] px-4 py-6 sm:px-8 sm:py-10">
         {state.status === 'loading' && (
           <p className="py-24 text-center text-sm tracking-wide text-muted-foreground">Loading chart…</p>
         )}
