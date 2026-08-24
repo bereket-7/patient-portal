@@ -2,6 +2,10 @@
   "name": "@trialcliniq/patient-portal",
   "version": "0.1.0",
   "private": true,
+  "packageManager": "pnpm@9.15.0",
+  "engines": {
+    "node": "20.x"
+  },
   "scripts": {
     "dev": "next dev -p 3102",
     "build": "next build",
