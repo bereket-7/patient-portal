@@ -25,11 +25,15 @@ import { establishPatientSession } from '@/lib/patient-auth-bridge';
 import {
   fetchSeedPatientAccounts,
   loadDevClinicalProfile,
-  loginDevPatientAccount,
   syncDevAccountToLocal,
   syncHealthExStatus,
   type DevSeedAccount,
 } from '@/lib/patient-dev-accounts';
+import {
+  loginPatientAccount,
+  PatientAccountsApiError,
+  patientAccountsErrorMessage,
+} from '@/lib/patient-accounts-api';
 import type { CachedClinicalRecords } from '@/lib/healthex-clinical';
 import { sendWelcomeNotificationIfNeeded } from '@/lib/mock/notifications';
 
@@ -41,7 +45,7 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>;
 
 export function LoginForm() {
-  const { account, login, replaceAccount } = usePatientAccount();
+  const { account, replaceAccount } = usePatientAccount();
   const { session, backendConfig, loading: authLoading, updateSession, resetSession } = useAuth();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -78,16 +82,21 @@ export function LoginForm() {
 
     let navigated = false;
     try {
-      const devAccount = await loginDevPatientAccount(values.email, values.password);
-      if (devAccount) {
-        if (!devAccount.emailVerified || !devAccount.phoneVerified) {
-          setError('Finish email and phone verification before signing in.');
-          syncDevAccountToLocal(devAccount, values.password);
-          return;
-        }
+      const result = await loginPatientAccount(values.email, values.password);
+      if (result.status === 'mfa_required') {
+        setError('This account requires an extra verification step before sign-in.');
+        return;
+      }
 
-        // API already validated credentials — mark logged in without a second local check.
-        let synced = syncDevAccountToLocal(devAccount, values.password);
+      const { account: apiAccount, accessToken } = result;
+      if (!apiAccount.emailVerified || !apiAccount.phoneVerified) {
+        setError('Finish email and phone verification before signing in.');
+        syncDevAccountToLocal(apiAccount, values.password);
+        return;
+      }
+
+      // API already validated credentials — mark logged in without a second local check.
+      let synced = syncDevAccountToLocal(apiAccount, values.password);
 
         // One status sync only if HealthEx link metadata is incomplete.
         if (!synced.healthExReferenceId || !synced.enterprisePatientId) {
@@ -197,57 +206,26 @@ export function LoginForm() {
         saveAccount(loggedIn);
         replaceAccount(loggedIn);
 
-        await establishPatientSession(loggedIn, {
-          session,
-          backendConfig,
-          updateSession,
-          resetSession,
-        });
+        await establishPatientSession(
+          loggedIn,
+          {
+            session,
+            backendConfig,
+            updateSession,
+            resetSession,
+          },
+          { accessToken },
+        );
         sendWelcomeNotificationIfNeeded(loggedIn.id);
         const showWelcome = searchParams.get('welcome') === '1';
         navigated = true;
         router.replace(showWelcome ? '/profile/welcome' : '/dashboard');
-        return;
-      }
-
-      const stored = loadAccount();
-      if (!stored) {
-        setError(
-          'No account found. Use jane.doe@patient.demo / DemoPatient1! or register a new account.',
-        );
-        return;
-      }
-
-      if (!isRegistrationComplete(stored)) {
-        setError('Finish email and phone verification before signing in.');
-        return;
-      }
-
-      const success = login(values.email, values.password);
-      if (!success) {
-        setError(
-          'Invalid email or password. Dev seed: jane.doe@patient.demo / DemoPatient1!',
-        );
-        return;
-      }
-
-      const loggedIn = loadAccount();
-      if (!loggedIn) {
-        setError('Unable to load account after sign-in.');
-        return;
-      }
-
-      await establishPatientSession(loggedIn, {
-        session,
-        backendConfig,
-        updateSession,
-        resetSession,
-      });
-
-      navigated = true;
-      router.replace('/dashboard');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unable to sign in. Try again.');
+      if (err instanceof PatientAccountsApiError) {
+        setError(patientAccountsErrorMessage(err));
+      } else {
+        setError(err instanceof Error ? err.message : 'Unable to sign in. Try again.');
+      }
     } finally {
       if (!navigated) {
         setBusy(false);

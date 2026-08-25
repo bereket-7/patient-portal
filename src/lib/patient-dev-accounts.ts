@@ -1,5 +1,6 @@
 import type { PatientAccount } from '@/lib/types/patient-account';
 import { loadAccount, saveAccount } from '@/lib/mock/patient-account-store';
+import { PATIENT_ACCOUNTS_API_BASE } from '@/lib/patient-accounts-api';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
 
@@ -49,8 +50,14 @@ async function devFetch<T>(
     });
     const body = await res.json().catch(() => null);
     if (!res.ok) {
-      const errBody = body as { error?: string; detail?: string } | null;
-      const message = [errBody?.error, errBody?.detail].filter(Boolean).join(': ');
+      const errBody = body as { error?: string; detail?: string; message?: unknown } | null;
+      const nested =
+        errBody?.message && typeof errBody.message === 'object'
+          ? (errBody.message as { error?: string; detail?: string })
+          : null;
+      const code = nested?.error || errBody?.error;
+      const detail = nested?.detail || errBody?.detail;
+      const message = [code, detail].filter(Boolean).join(': ');
       return {
         ok: false,
         data: null,
@@ -115,7 +122,7 @@ export function syncDevAccountToLocal(dev: DevPatientAccount, password: string):
 }
 
 export async function fetchSeedPatientAccounts(): Promise<DevSeedAccount[]> {
-  const result = await devFetch<{ accounts: DevSeedAccount[] }>('/dev/patient-accounts/seed');
+  const result = await devFetch<{ accounts: DevSeedAccount[] }>(`${PATIENT_ACCOUNTS_API_BASE}/seed`);
   if (!result.ok || !result.data?.accounts) return [];
   return result.data.accounts;
 }
@@ -134,7 +141,7 @@ export async function registerDevPatientAccount(input: {
     account: DevPatientAccount;
     healthex?: { linked?: boolean; error?: string; reference_id?: string };
     healthex_link_error?: string;
-  }>('/dev/patient-accounts/register', {
+  }>(`${PATIENT_ACCOUNTS_API_BASE}/register`, {
     method: 'POST',
     body: JSON.stringify(input),
   });
@@ -151,7 +158,7 @@ export async function loginDevPatientAccount(
   email: string,
   password: string,
 ): Promise<DevPatientAccount | null> {
-  const result = await devFetch<{ account: DevPatientAccount }>('/dev/patient-accounts/login', {
+  const result = await devFetch<{ account: DevPatientAccount }>(`${PATIENT_ACCOUNTS_API_BASE}/login`, {
     method: 'POST',
     body: JSON.stringify({ email, password }),
   });
@@ -160,7 +167,7 @@ export async function loginDevPatientAccount(
 }
 
 export async function verifyDevPatientEmail(email: string): Promise<DevPatientAccount | null> {
-  const result = await devFetch<{ account: DevPatientAccount }>('/dev/patient-accounts/verify-email', {
+  const result = await devFetch<{ account: DevPatientAccount }>(`${PATIENT_ACCOUNTS_API_BASE}/verify-email`, {
     method: 'POST',
     body: JSON.stringify({ email }),
   });
@@ -169,7 +176,7 @@ export async function verifyDevPatientEmail(email: string): Promise<DevPatientAc
 }
 
 export async function verifyDevPatientPhone(email: string): Promise<DevPatientAccount | null> {
-  const result = await devFetch<{ account: DevPatientAccount }>('/dev/patient-accounts/verify-phone', {
+  const result = await devFetch<{ account: DevPatientAccount }>(`${PATIENT_ACCOUNTS_API_BASE}/verify-phone`, {
     method: 'POST',
     body: JSON.stringify({ email }),
   });
@@ -186,7 +193,7 @@ export async function retryHealthExLink(email: string): Promise<{
     account: DevPatientAccount;
     healthex?: { linked?: boolean; error?: string };
     healthex_link_error?: string;
-  }>('/dev/patient-accounts/retry-healthex-link', {
+  }>(`${PATIENT_ACCOUNTS_API_BASE}/retry-healthex-link`, {
     method: 'POST',
     body: JSON.stringify({ email }),
   });
@@ -219,7 +226,7 @@ export async function syncHealthExStatus(email: string): Promise<{
       patient_id?: string | null;
       reference_id?: string;
     };
-  }>('/dev/patient-accounts/sync-healthex', {
+  }>(`${PATIENT_ACCOUNTS_API_BASE}/sync-healthex`, {
     method: 'POST',
     body: JSON.stringify({ email }),
   });
@@ -240,7 +247,7 @@ export async function loadDevClinicalProfile(email: string): Promise<{
     account: DevPatientAccount;
     profile: Record<string, unknown> | null;
     portal_snapshot?: Record<string, unknown> | null;
-  }>('/dev/patient-accounts/load-clinical-profile', {
+  }>(`${PATIENT_ACCOUNTS_API_BASE}/load-clinical-profile`, {
     method: 'POST',
     body: JSON.stringify({ email }),
   });
@@ -264,7 +271,7 @@ export async function seedDevDummyClinical(email: string): Promise<{
     status: string;
     account: DevPatientAccount;
     profile: Record<string, unknown> | null;
-  }>('/dev/patient-accounts/seed-dummy-clinical', {
+  }>(`${PATIENT_ACCOUNTS_API_BASE}/seed-dummy-clinical`, {
     method: 'POST',
     body: JSON.stringify({ email }),
   });
@@ -296,7 +303,7 @@ export async function persistDevClinicalProfile(
     profile: Record<string, unknown> | null;
     portal_snapshot?: Record<string, unknown> | null;
     enterprise_patient_id?: string;
-  }>('/dev/patient-accounts/persist-clinical-profile', {
+  }>(`${PATIENT_ACCOUNTS_API_BASE}/persist-clinical-profile`, {
     method: 'POST',
     body: JSON.stringify({
       email,
@@ -337,7 +344,7 @@ export async function exchangeHealthExOAuthCode(input: {
   const result = await devFetch<{
     account: DevPatientAccount;
     oauth?: { connected?: boolean; expires_at?: string; has_health_ex_link?: boolean };
-  }>('/dev/patient-accounts/healthex-oauth/exchange', {
+  }>(`${PATIENT_ACCOUNTS_API_BASE}/healthex-oauth/exchange`, {
     method: 'POST',
     body: JSON.stringify(input),
   });

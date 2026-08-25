@@ -10,12 +10,13 @@ type AuthBridgeCtx = {
 };
 
 /**
- * After local credential validation, mint (or stub) a gateway JWT and
- * persist the shared-ui auth session for API calls.
+ * After credential validation against the patient-accounts API, persist a
+ * gateway JWT (login-issued token when present, otherwise minted) for API calls.
  */
 export async function establishPatientSession(
   account: PatientAccount,
   auth: AuthBridgeCtx,
+  issued?: { accessToken?: string },
 ): Promise<void> {
   const sub = account.id;
   const patientId =
@@ -23,10 +24,14 @@ export async function establishPatientSession(
   const scope = auth.session.scope || 'patient/*.read';
   const purpose = auth.session.purpose || 'RESRCH';
 
-  let token = auth.session.token || 'dev-token';
-  let mode: AuthSession['mode'] = auth.session.mode === 'external' ? 'external' : 'stub';
+  let token = issued?.accessToken || auth.session.token || 'dev-token';
+  let mode: AuthSession['mode'] = issued?.accessToken
+    ? 'jwt'
+    : auth.session.mode === 'external'
+      ? 'external'
+      : 'stub';
 
-  if (auth.backendConfig?.mintEnabled) {
+  if (!issued?.accessToken && auth.backendConfig?.mintEnabled) {
     token = await mintDevToken({ sub, scope, purpose });
     mode = 'jwt';
   }
