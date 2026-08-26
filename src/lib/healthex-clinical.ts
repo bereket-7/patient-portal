@@ -65,6 +65,11 @@ export type CachedClinicalRecords = {
   records: HealthRecords;
   /** Where this snapshot was loaded from (live ingest, postgres, or dev dummy). */
   source?: 'live' | 'database' | 'dummy';
+  processingStatus?: 'PENDING' | 'READY' | 'PARTIAL' | 'FAILED';
+  qualityScore?: number | null;
+  issues?: string[];
+  errors?: Array<{ stage: string; reason: string; resource_type?: string; at?: string }>;
+  integrityHash?: string | null;
 };
 
 function severityFromName(name: string): ConditionRecord['severity'] {
