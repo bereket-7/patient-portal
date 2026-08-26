@@ -34,7 +34,7 @@ Patient-facing web application for managing research consent, viewing participat
 | Profile | `/profile` | Delivered |
 | **Digital Member ID** | `/profile/member-id` | **Delivered** — view/download/print + QR verify (`enterprisePatientId`) |
 | **Digital Welcome Letter** | `/profile/welcome` | **Delivered** — post-enrollment letter, print/PDF |
-| Share with provider | `/profile/share` | Delivered — OTP + QR (gateway dev API) |
+| Share with provider | `/profile/share` | **Delivered** — OTP + QR via `/api/v1/share` (patient-share-service) |
 
 ## Live Mode Configuration
 
@@ -119,6 +119,16 @@ When `NEXT_PUBLIC_DEMO_MODE=false` and the API gateway is running, the portal ca
 | MPI lookup | `GET /api/v1/patient-identity/:enterpriseId` |
 | Member ID QR verify | `POST /dev/member-verify/token`, `GET /dev/member-verify/:token` |
 | Access log | `GET /api/v1/audit?patient_id=` |
+| Clinical profile (validated) | `GET /api/v1/reports/patient-profile/:enterpriseId` — requires `processing_status` `READY`/`PARTIAL` + integrity hash before UI paint |
+| Mark processing pending | Set by ingest (`POST .../patient-profile/pending`); portal polls until normalize finalizes |
+| Secure QR share (G23) | `POST/GET /api/v1/share/sessions*` + `POST .../verify` + `GET /api/v1/share/audit` |
+
+### FHIR processing & clinical validation (live mode)
+
+1. HealthEx fetch marks the clinical profile **PENDING**.
+2. `fhir-normalization` quality-gates each FHIR resource; store write failures mark **FAILED**.
+3. Bundle finalize upserts **READY** / **PARTIAL** / **FAILED** with `quality_score`, `issues`, `errors`, `resource_counts`, `integrity_hash`.
+4. Portal verifies integrity before presenting health records; live mode never falls back to mock data on failure.
 
 Local dev requirements for live ingest:
 

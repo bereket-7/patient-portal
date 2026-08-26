@@ -14,6 +14,7 @@ import {
   Smartphone,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useAuth } from "@trialcliniq/shared-ui";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -25,14 +26,19 @@ import {
 } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ShareQrCode } from "@/components/share/share-qr-code";
+import { PermissionSelector } from "@/components/share/permission-selector";
 import { useHealthRecords } from "@/lib/hooks/use-health-records";
 import {
   createPatientShareSession,
+  fetchShareAudit,
   getCurrentPatientShareSession,
   resolveShareUrl,
   revokePatientShareSession,
   type PatientShareSession,
+  type ShareAuditEvent,
+  type SharePermission,
 } from "@/lib/patient-share-api";
+import type { SharePermission as UiSharePermission } from "@/lib/types/share";
 import { getDisplayName } from "@/lib/types/patient-account";
 import { usePatientAccount } from "@/providers/patient-account-provider";
 
@@ -46,24 +52,44 @@ function formatCountdown(expiresAt: string): string {
 
 export default function ProfileSharePage() {
   const { account } = usePatientAccount();
+  const { session: authSession } = useAuth();
   const { records } = useHealthRecords();
   const [session, setSession] = useState<PatientShareSession | null>(null);
   const [loading, setLoading] = useState(false);
   const [countdown, setCountdown] = useState("");
   const [shareUrl, setShareUrl] = useState("");
   const [createError, setCreateError] = useState<string | null>(null);
+  const [permission, setPermission] = useState<UiSharePermission>("ALL");
+  const [auditEvents, setAuditEvents] = useState<ShareAuditEvent[]>([]);
+
+  const loadAudit = useCallback(async () => {
+    if (!authSession?.token || !account) return;
+    const patientId =
+      account.enterprisePatientId || account.id || authSession.sub || "";
+    if (!patientId) return;
+    const events = await fetchShareAudit(authSession, patientId);
+    setAuditEvents(events);
+  }, [account, authSession]);
 
   const loadSession = useCallback(async () => {
     if (!account?.email) return;
-    const current = await getCurrentPatientShareSession(account.email);
+    const current = await getCurrentPatientShareSession(
+      account.email,
+      authSession,
+      account.id,
+    );
     if (current?.status === "active") {
       setSession(current);
       setShareUrl(resolveShareUrl(current));
+      if (current.permission_scope) {
+        setPermission(current.permission_scope as UiSharePermission);
+      }
     } else {
       setSession(null);
       setShareUrl("");
     }
-  }, [account?.email]);
+    await loadAudit();
+  }, [account?.email, account?.id, authSession, loadAudit]);
 
   useEffect(() => {
     void loadSession();
@@ -81,35 +107,44 @@ export default function ProfileSharePage() {
     if (!account?.email) return;
     setLoading(true);
     setCreateError(null);
-    const { session: created, error } = await createPatientShareSession({
-      email: account.email,
-      patient_id: account.id,
-      first_name: account.firstName,
-      last_name: account.lastName,
-      date_of_birth: account.dateOfBirth,
-      phone: account.phone,
-      enterprise_patient_id: account.enterprisePatientId,
-      health_ex_patient_id: account.healthExPatientId,
-      conditions: records.conditions.map((c) => c.name),
-      medications: records.medications.map((m) => m.name),
-      allergies: records.allergies,
-    });
+    const { session: created, error } = await createPatientShareSession(
+      {
+        email: account.email,
+        patient_id: account.id,
+        account_id: account.id,
+        first_name: account.firstName,
+        last_name: account.lastName,
+        date_of_birth: account.dateOfBirth,
+        phone: account.phone,
+        enterprise_patient_id: account.enterprisePatientId,
+        health_ex_patient_id: account.healthExPatientId,
+        consent_reference_id: account.consentReferenceId,
+        permission: permission as SharePermission,
+        conditions: records.conditions.map((c) => c.name),
+        medications: records.medications.map((m) => m.name),
+        allergies: records.allergies,
+      },
+      authSession,
+    );
     setLoading(false);
-    if (!created?.otp) {
+    if (!created?.otp && !created?.token) {
       const message =
         error === "patient_share_disabled"
-          ? "Share is disabled — enable AUTH_DEV_MODE on the API gateway."
+          ? "Share is disabled — set PATIENT_SHARE_ENABLED=true on patient-share-service."
           : error === "account_not_found"
             ? "Account not found on the server."
             : error === "network_error"
-              ? "Cannot reach the API gateway at localhost:3000."
-              : "Could not create share session";
+              ? "Cannot reach the API gateway."
+              : error === "missing_bearer_token" || error === "http_401"
+                ? "Sign in again — share requires an authenticated session."
+                : "Could not create share session";
       setCreateError(message);
       toast.error(message);
       return;
     }
     setSession(created);
     setShareUrl(resolveShareUrl(created));
+    await loadAudit();
     toast.success(
       "Share link ready — give the OTP to your provider after they scan.",
     );
@@ -117,9 +152,10 @@ export default function ProfileSharePage() {
 
   async function handleRevoke() {
     if (!account?.email) return;
-    await revokePatientShareSession(account.email);
+    await revokePatientShareSession(account.email, authSession, account.id);
     setSession(null);
     setShareUrl("");
+    await loadAudit();
     toast.success("Share link revoked");
   }
 
@@ -190,8 +226,19 @@ export default function ProfileSharePage() {
               </li>
             </ol>
 
+            <div className="rounded-xl border border-white/20 bg-white/10 p-4">
+              <p className="mb-3 text-xs font-medium uppercase tracking-wide text-teal-100/90">
+                What to share
+              </p>
+              <PermissionSelector
+                value={permission}
+                onChange={setPermission}
+                disabled={loading || Boolean(session?.token)}
+              />
+            </div>
+
             <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-              {!session?.otp ? (
+              {!session?.token ? (
                 <Button
                   onClick={() => void handleCreate()}
                   disabled={loading}
@@ -228,7 +275,7 @@ export default function ProfileSharePage() {
           </div>
 
           <div className="min-w-0 border-t bg-card/80 p-4 sm:p-8 lg:border-l lg:border-t-0">
-            {!session?.otp ? (
+            {!session?.token ? (
               <div className="flex h-full min-h-[240px] flex-col items-center justify-center rounded-xl border border-dashed border-muted-foreground/30 bg-muted/20 p-4 text-center sm:min-h-[320px] sm:p-8">
                 {loading ? (
                   <>
@@ -282,31 +329,38 @@ export default function ProfileSharePage() {
                   </p>
                 </div>
 
-                <Card className="min-w-0 border-primary/20 bg-primary/[0.04]">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-medium">
-                      Your authorization code (OTP)
-                    </CardTitle>
-                    <CardDescription>
-                      Read this number to the provider — do not send by email or
-                      text.
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="flex flex-col items-stretch gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-                    <p className="min-w-0 break-all font-mono text-2xl font-bold tracking-[0.18em] text-primary sm:text-4xl sm:tracking-[0.35em]">
-                      {session.otp}
-                    </p>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={copyOtp}
-                      className="w-full shrink-0 gap-1 sm:w-auto"
-                    >
-                      <Copy className="h-3.5 w-3.5" />
-                      Copy OTP
-                    </Button>
-                  </CardContent>
-                </Card>
+                {session.otp ? (
+                  <Card className="min-w-0 border-primary/20 bg-primary/[0.04]">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm font-medium">
+                        Your authorization code (OTP)
+                      </CardTitle>
+                      <CardDescription>
+                        Read this number to the provider — shown once; do not
+                        send by email or text.
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="flex flex-col items-stretch gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+                      <p className="min-w-0 break-all font-mono text-2xl font-bold tracking-[0.18em] text-primary sm:text-4xl sm:tracking-[0.35em]">
+                        {session.otp}
+                      </p>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={copyOtp}
+                        className="w-full shrink-0 gap-1 sm:w-auto"
+                      >
+                        <Copy className="h-3.5 w-3.5" />
+                        Copy OTP
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <p className="text-center text-sm text-muted-foreground">
+                    OTP was shown when this link was created. Generate a new
+                    code if the provider still needs it.
+                  </p>
+                )}
 
                 <div className="min-w-0 space-y-2">
                   <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
@@ -333,13 +387,38 @@ export default function ProfileSharePage() {
         </div>
       </div>
 
+      {auditEvents.length > 0 && (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">Share activity</CardTitle>
+            <CardDescription>
+              Durable audit trail (create, access, revoke) from patient-share-service.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ul className="space-y-2">
+              {auditEvents.slice(0, 8).map((event) => (
+                <li
+                  key={event.audit_id}
+                  className="flex items-center justify-between gap-3 rounded-md border bg-muted/20 px-3 py-2 text-sm"
+                >
+                  <p className="font-medium capitalize">{event.action.toLowerCase()}</p>
+                  <span className="shrink-0 text-xs text-muted-foreground">
+                    {new Date(event.created_at).toLocaleString()}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+      )}
+
       <Alert>
         <Shield className="h-4 w-4" />
         <AlertTitle>Privacy notice</AlertTitle>
         <AlertDescription>
-          Shared data includes demographics and clinical summary (conditions,
-          medications, allergies). Access expires automatically. Revoke anytime
-          to invalidate the link immediately.
+          Shared data includes demographics and clinical summary scoped to what you selected.
+          Access expires automatically. Revoke anytime to invalidate the link immediately.
         </AlertDescription>
       </Alert>
     </div>

@@ -76,6 +76,8 @@ export default function DashboardPage() {
     hasLiveData,
     refreshing,
     error,
+    processingStatus,
+    processingIssues,
     lastFetchedAt,
     refreshMedicalData,
   } = useHealthRecords();
@@ -142,6 +144,25 @@ export default function DashboardPage() {
       {error && (
         <Alert variant="destructive">
           <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+
+      {processingStatus === 'PARTIAL' && processingIssues.length > 0 && !error && (
+        <Alert className="border-amber-200 bg-amber-50/80 text-amber-950">
+          <AlertTitle>Partial clinical data</AlertTitle>
+          <AlertDescription>
+            Some FHIR resources did not pass validation: {processingIssues.slice(0, 5).join('; ')}
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {processingStatus === 'PENDING' && (
+        <Alert>
+          <Loader2 className="h-4 w-4 animate-spin" />
+          <AlertTitle>Validating clinical data</AlertTitle>
+          <AlertDescription>
+            Retrieved FHIR resources are being normalized and checked for integrity before display.
+          </AlertDescription>
         </Alert>
       )}
 
