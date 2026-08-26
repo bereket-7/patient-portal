@@ -8,13 +8,12 @@ import { getRegistrationStep, isRegistrationComplete } from '@/lib/types/patient
 import { loadAccount } from '@/lib/mock/patient-account-store';
 import { isPatientAuthenticated } from '@/lib/patient-auth';
 
-const REGISTRATION_ROUTES = ['/register', '/verify-email', '/verify-phone'];
+const REGISTRATION_ROUTES = ['/register', '/verify-email'];
 const PORTAL_ROUTES_PREFIX = ['/dashboard', '/connect', '/trials', '/health', '/profile', '/consent', '/participation', '/privacy', '/share'];
 
 const REGISTRATION_ROUTE_MAP: Record<Exclude<ReturnType<typeof getRegistrationStep>, 'complete'>, string> = {
   register: '/register',
   'verify-email': '/verify-email',
-  'verify-phone': '/verify-phone',
 };
 
 function isRegistrationRoute(pathname: string) {

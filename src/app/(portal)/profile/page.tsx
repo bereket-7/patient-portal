@@ -143,9 +143,6 @@ export default function ProfilePage() {
                 <Badge variant={account.emailVerified ? "success" : "outline"}>
                   Email {account.emailVerified ? "verified" : "unverified"}
                 </Badge>
-                <Badge variant={account.phoneVerified ? "success" : "outline"}>
-                  Phone {account.phoneVerified ? "verified" : "unverified"}
-                </Badge>
                 <Badge
                   variant={account.healthExConnected ? "success" : "secondary"}
                 >
@@ -242,10 +239,6 @@ export default function ProfilePage() {
                   Verification status: email{" "}
                   <span className="font-medium text-foreground">
                     {account.emailVerified ? "verified" : "pending"}
-                  </span>
-                  , phone{" "}
-                  <span className="font-medium text-foreground">
-                    {account.phoneVerified ? "verified" : "pending"}
                   </span>
                   .
                 </p>

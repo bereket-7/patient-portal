@@ -32,7 +32,16 @@ export async function establishPatientSession(
       : 'stub';
 
   if (!issued?.accessToken && auth.backendConfig?.mintEnabled) {
-    token = await mintDevToken({ sub, scope, purpose });
+    // Include HealthEx ids so patient-self-access allows GET /healthex/patients/:referenceId
+    token = await mintDevToken({
+      sub,
+      scope,
+      purpose,
+      role: 'patient',
+      enterprisePatientId: account.enterprisePatientId,
+      healthExPatientId: account.healthExPatientId,
+      healthExReferenceId: account.healthExReferenceId,
+    });
     mode = 'jwt';
   }
 

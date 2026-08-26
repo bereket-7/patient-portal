@@ -104,19 +104,40 @@ export function mapDevAccountToPatientAccount(
 export function syncDevAccountToLocal(dev: DevPatientAccount, password: string): PatientAccount {
   const existing = typeof window !== 'undefined' ? loadAccount() : null;
   const base = mapDevAccountToPatientAccount(dev, password);
+  const sameHealthEx =
+    existing &&
+    existing.email === dev.email &&
+    existing.healthExReferenceId === base.healthExReferenceId;
+  const keepCache =
+    sameHealthEx &&
+    existing.clinicalCache &&
+    existing.clinicalCache.source !== 'dummy';
   const account =
     existing && existing.email === dev.email
       ? {
           ...base,
-          consentStatus: existing.consentStatus,
-          clinicalCache: existing.clinicalCache,
+          consentStatus:
+            base.healthexConsentStatus === 'CONSENTED'
+              ? ('granted' as const)
+              : existing.consentStatus,
+          clinicalCache: keepCache ? existing.clinicalCache : undefined,
           backendConsentId: existing.backendConsentId ?? base.backendConsentId,
-          consentGrantedAt: existing.consentGrantedAt,
+          consentGrantedAt:
+            base.healthexConsentStatus === 'CONSENTED'
+              ? existing.consentGrantedAt || new Date().toISOString()
+              : existing.consentGrantedAt,
           consentRevokedAt: existing.consentRevokedAt,
-          lastIngestAt: existing.lastIngestAt,
-          lastIngestRawUri: existing.lastIngestRawUri,
+          lastIngestAt: keepCache ? existing.lastIngestAt : undefined,
+          lastIngestRawUri: keepCache ? existing.lastIngestRawUri : undefined,
         }
-      : base;
+      : base.healthexConsentStatus === 'CONSENTED'
+        ? {
+            ...base,
+            consentStatus: 'granted' as const,
+            consentGrantedAt: new Date().toISOString(),
+            healthExConnected: true,
+          }
+        : base;
   saveAccount(account);
   return account;
 }
@@ -166,19 +187,10 @@ export async function loginDevPatientAccount(
   return result.data.account;
 }
 
-export async function verifyDevPatientEmail(email: string): Promise<DevPatientAccount | null> {
+export async function verifyDevPatientEmail(token: string): Promise<DevPatientAccount | null> {
   const result = await devFetch<{ account: DevPatientAccount }>(`${PATIENT_ACCOUNTS_API_BASE}/verify-email`, {
     method: 'POST',
-    body: JSON.stringify({ email }),
-  });
-  if (!result.ok || !result.data?.account) return null;
-  return result.data.account;
-}
-
-export async function verifyDevPatientPhone(email: string): Promise<DevPatientAccount | null> {
-  const result = await devFetch<{ account: DevPatientAccount }>(`${PATIENT_ACCOUNTS_API_BASE}/verify-phone`, {
-    method: 'POST',
-    body: JSON.stringify({ email }),
+    body: JSON.stringify({ token }),
   });
   if (!result.ok || !result.data?.account) return null;
   return result.data.account;
@@ -264,6 +276,7 @@ export async function loadDevClinicalProfile(email: string): Promise<{
 
 export async function seedDevDummyClinical(email: string): Promise<{
   profile: Record<string, unknown> | null;
+  portalSnapshot: Record<string, unknown> | null;
   account: DevPatientAccount | null;
   error: string | null;
 }> {
@@ -271,15 +284,17 @@ export async function seedDevDummyClinical(email: string): Promise<{
     status: string;
     account: DevPatientAccount;
     profile: Record<string, unknown> | null;
+    portal_snapshot?: Record<string, unknown> | null;
   }>(`${PATIENT_ACCOUNTS_API_BASE}/seed-dummy-clinical`, {
     method: 'POST',
     body: JSON.stringify({ email }),
   });
   if (!result.ok) {
-    return { profile: null, account: null, error: result.error };
+    return { profile: null, portalSnapshot: null, account: null, error: result.error };
   }
   return {
     profile: result.data?.profile ?? null,
+    portalSnapshot: result.data?.portal_snapshot ?? null,
     account: result.data?.account ?? null,
     error: null,
   };

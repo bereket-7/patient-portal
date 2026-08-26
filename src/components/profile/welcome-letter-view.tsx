@@ -19,7 +19,7 @@ export function WelcomeLetterView() {
   const { account } = usePatientAccount();
   if (!account) return null;
 
-  const enrollmentDate = account.phoneVerified
+  const enrollmentDate = account.emailVerified
     ? formatDateTime(new Date().toISOString())
     : 'Pending verification';
   const memberId = account.enterprisePatientId || 'Assigned after consent';

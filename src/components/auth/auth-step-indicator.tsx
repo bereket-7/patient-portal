@@ -23,7 +23,7 @@ export function RegistrationStepIndicator({
             )}
           >
             <span className="sm:hidden">
-              {s.step === 1 ? "Account" : s.step === 2 ? "Email" : "Phone"}
+              {s.step === 1 ? "Account" : "Email"}
             </span>
             <span className="hidden sm:inline">{s.label}</span>
           </span>

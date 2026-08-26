@@ -47,16 +47,15 @@ export type RegistrationInput = {
   address?: string;
 };
 
-export type RegistrationStep = 'register' | 'verify-email' | 'verify-phone' | 'complete';
+export type RegistrationStep = 'register' | 'verify-email' | 'complete';
 
 export function isRegistrationComplete(account: PatientAccount | null): boolean {
-  return Boolean(account?.emailVerified && account?.phoneVerified);
+  return Boolean(account?.emailVerified);
 }
 
 export function getRegistrationStep(account: PatientAccount | null): RegistrationStep {
   if (!account) return 'register';
   if (!account.emailVerified) return 'verify-email';
-  if (!account.phoneVerified) return 'verify-phone';
   return 'complete';
 }
 

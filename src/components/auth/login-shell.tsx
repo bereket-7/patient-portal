@@ -81,7 +81,7 @@ export function LoginShell({ children }: { children: React.ReactNode }) {
           </aside>
 
           <section className="flex flex-1 items-center justify-center px-4 pb-10 sm:px-6 lg:px-10 lg:py-16">
-            <div className="w-full max-w-md rounded-2xl border border-white/10 bg-white/95 p-5 shadow-2xl shadow-black/40 backdrop-blur sm:p-8">
+            <div className="w-full max-w-md rounded-2xl border border-white/10 bg-card p-5 text-card-foreground shadow-2xl shadow-black/40 backdrop-blur sm:p-8">
               {children}
             </div>
           </section>

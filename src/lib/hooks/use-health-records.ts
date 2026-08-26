@@ -7,23 +7,19 @@ import {
   loadAndCacheClinicalRecords,
   type CachedClinicalRecords,
 } from '@/lib/healthex-clinical';
-import { triggerHealthExFetch } from '@/lib/healthex-connect';
 import {
   canHydrateHealthExClinical,
   hasHealthExConsent,
   hasPlatformConsent,
-  mergeHealthExSyncIntoAccount,
   resolveConsentReferenceId,
 } from '@/lib/healthex-consent';
-import { buildDummyCachedClinicalRecords, buildDummyHealthRecords } from '@/lib/mock/dummy-clinical-data';
+import { buildDummyHealthRecords } from '@/lib/mock/dummy-clinical-data';
 import { EMPTY_HEALTH_RECORDS, MOCK_HEALTH_RECORDS } from '@/lib/mock/health-records';
 import type { HealthRecords } from '@/lib/types/health-records';
 import { shouldUseBackendApis, type PatientClinicalProfile } from '@/lib/patient-api';
 import {
   loadDevClinicalProfile,
   persistDevClinicalProfile,
-  seedDevDummyClinical,
-  syncHealthExStatus,
 } from '@/lib/patient-dev-accounts';
 import { usePatientAccount, updateAccount, saveAccount } from '@/providers/patient-account-provider';
 
@@ -155,36 +151,11 @@ export function useHealthRecords() {
         return portalSnapshot;
       }
 
-      if (!profile && useDummyHealthData) {
-        const seeded = await seedDevDummyClinical(account.email);
-        if (seeded.error) {
-          setError(seeded.error);
-        }
-        if (seeded.account) {
-          devAccount = { ...account, ...seeded.account } as typeof account;
-        }
-        if (seeded.profile && !('error' in seeded.profile)) {
-          profile = seeded.profile as PatientClinicalProfile;
-        } else if (useDummyHealthData) {
-          const cache = buildDummyCachedClinicalRecords({
-            referenceId: account.healthExReferenceId || account.id,
-            patientId: account.healthExPatientId,
-            enterprisePatientId: devAccount.enterprisePatientId || account.enterprisePatientId,
-          });
-          applyClinicalCache(cache, {
-            enterprisePatientId:
-              devAccount.enterprisePatientId || account.enterprisePatientId || `EP-${account.id}`,
-          });
-          setDataSource('dummy');
-          return cache;
-        }
-      }
-
       if (profile && profileHasData(profile)) {
         const cache = mapClinicalProfileToCache({
           profile,
           referenceId: account.healthExReferenceId || account.id,
-          source: useDummyHealthData && profile.encounters?.length ? 'dummy' : 'database',
+          source: 'database',
         });
         applyClinicalCache(cache, {
           enterprisePatientId: devAccount.enterprisePatientId || account.enterprisePatientId,
@@ -272,48 +243,27 @@ export function useHealthRecords() {
     setDbLoading(true);
     setError(null);
     try {
-      const consentReferenceId = resolveConsentReferenceId(account);
-      let cache: CachedClinicalRecords | null = null;
-      let rawUri: string | undefined;
-
-      if (account.healthExPatientId && consentReferenceId) {
-        const ingest = await triggerHealthExFetch({
-          healthexPatientId: account.healthExPatientId,
-          consentReferenceId,
-          authToken: session.token,
-          session,
-          enterprisePatientId: account.enterprisePatientId,
-        });
-        rawUri = ingest.raw_uri;
-        cache = await loadAndCacheClinicalRecords({
-          session,
-          referenceId: account.healthExReferenceId,
-          rawUri: ingest.raw_uri,
-          transactionId: ingest.transaction_id,
-          ingestClinical: ingest.clinical,
-        });
-      } else {
-        cache = await loadAndCacheClinicalRecords({
-          session,
-          referenceId: account.healthExReferenceId,
-        });
-      }
-
+      // Same source as site portal Patient 360:
+      // GET /api/v1/healthex/patients/:referenceId?include_clinical=true
+      const cache = await loadAndCacheClinicalRecords({
+        session,
+        referenceId: account.healthExReferenceId,
+      });
       cache.source = 'live';
+
       if (!cacheHasRows(cache)) {
         setError('No clinical data returned from HealthEx yet.');
         return { ok: false as const, error: 'empty_clinical' };
       }
 
-      const persisted = await persistCacheToDatabase(cache, rawUri);
+      const consentReferenceId = resolveConsentReferenceId(account);
+      const persisted = await persistCacheToDatabase(cache);
       if (!persisted.ok) {
         setError(persisted.error || 'Failed to save clinical data to database');
-        // Still show live cache, but surface persist failure.
         applyClinicalCache(cache, {
           healthExPatientId: cache.patientId || account.healthExPatientId,
           healthexConsentStatus: cache.consentStatus || account.healthexConsentStatus,
           healthexRetrievalStatus: cache.retrievalStatus || account.healthexRetrievalStatus,
-          lastIngestRawUri: rawUri || cache.rawUri || account.lastIngestRawUri,
           lastIngestAt: cache.fetchedAt,
           consentReferenceId: consentReferenceId || account.consentReferenceId,
         });
@@ -328,7 +278,6 @@ export function useHealthRecords() {
         healthExPatientId: cache.patientId || account.healthExPatientId,
         healthexConsentStatus: cache.consentStatus || account.healthexConsentStatus,
         healthexRetrievalStatus: cache.retrievalStatus || account.healthexRetrievalStatus,
-        lastIngestRawUri: rawUri || cache.rawUri || account.lastIngestRawUri,
         lastIngestAt: cache.fetchedAt,
         consentReferenceId: consentReferenceId || account.consentReferenceId,
       });
@@ -347,27 +296,26 @@ export function useHealthRecords() {
     if (!account?.email || !connected) return;
 
     const cache = account.clinicalCache;
-    if (cacheHasRows(cache) && cache?.source === 'database') {
-      setDataSource('database');
+    if (cacheHasRows(cache) && (cache?.source === 'database' || cache?.source === 'live')) {
+      setDataSource(cache?.source || 'database');
       return;
     }
 
-    const key = `${account.email}:${account.enterprisePatientId || 'none'}`;
+    // Include reference id so rebinding Jane → consented HealthEx re-hydrates.
+    const key = `${account.email}:${account.healthExReferenceId || 'none'}:${account.enterprisePatientId || 'none'}`;
     if (hydrateAttempted.current === key) return;
     hydrateAttempted.current = key;
 
     void (async () => {
-      // DB-first: always try Postgres before HealthEx.
       const fromDb = await loadFromDatabase();
       if (fromDb && cacheHasRows(fromDb)) return;
 
-      // First fill only — HealthEx when nothing stored yet.
       if (healthexReady && session.token) {
         await hydrateFromHealthEx();
       }
     })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- hydrate once per account/enterprise id
-  }, [account?.email, account?.enterprisePatientId, connected, healthexReady, session.token]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- hydrate once per account/healthex binding
+  }, [account?.email, account?.healthExReferenceId, account?.enterprisePatientId, connected, healthexReady, session.token]);
 
   const records: HealthRecords = useMemo(() => {
     if (demoMode && !account?.clinicalCache) return MOCK_HEALTH_RECORDS;
@@ -383,103 +331,69 @@ export function useHealthRecords() {
   const hasLiveData = Boolean(cacheHasRows(account?.clinicalCache));
 
   const refreshMedicalData = useCallback(async () => {
-    if (!account?.healthExReferenceId || !account.healthExPatientId) {
+    if (!account?.healthExReferenceId) {
       if (useDummyHealthData && connected) {
         await loadFromDatabase();
         return { ok: true as const };
       }
-      setError('Connect and sync HealthEx first (need patient ID).');
+      setError('Connect and sync HealthEx first (need reference ID).');
       return { ok: false as const, error: 'missing_healthex_ids' };
     }
     if (!hasHealthExConsent(account)) {
       setError('HealthEx consent is not granted yet.');
       return { ok: false as const, error: 'not_consented' };
     }
+    if (!session.token) {
+      setError('Session expired. Sign in again.');
+      return { ok: false as const, error: 'missing_session_token' };
+    }
 
     setRefreshing(true);
     setError(null);
     try {
-      const sync = await syncHealthExStatus(account.email);
-      if (!sync.account) {
-        setError('Could not verify HealthEx consent status.');
-        setRefreshing(false);
-        return { ok: false as const, error: 'sync_failed' };
-      }
-      const liveConsent = sync.healthex?.consent_status ?? sync.account.healthexConsentStatus;
-      if (liveConsent !== 'CONSENTED') {
-        const invalidated = mergeHealthExSyncIntoAccount(account, {
-          consentStatus: liveConsent,
-          consentReferenceId: sync.healthex?.consent_reference_id ?? sync.account.consentReferenceId,
-        });
-        saveAccount(invalidated);
-        replaceAccount(invalidated);
-        setError('HealthEx consent is not approved. Complete the email consent step first.');
-        setRefreshing(false);
-        return { ok: false as const, error: 'not_consented' };
-      }
-
-      const consentReferenceId = resolveConsentReferenceId({
-        ...account,
-        consentReferenceId: sync.healthex?.consent_reference_id ?? account.consentReferenceId,
-        healthexConsentStatus: liveConsent,
-      });
-      if (!consentReferenceId) {
-        setError('Missing consent reference. Sync from HealthEx first.');
-        setRefreshing(false);
-        return { ok: false as const, error: 'missing_consent_reference' };
-      }
-
-      // On-demand HealthEx fetch → S3 raw (ingest) → Postgres snapshot.
-      const ingest = await triggerHealthExFetch({
-        healthexPatientId: sync.account.healthExPatientId || account.healthExPatientId,
-        consentReferenceId,
-        authToken: session.token,
-        session,
-        enterprisePatientId:
-          sync.account.enterprisePatientId || account.enterprisePatientId,
-      });
-
+      // Same clinical payload as site portal Patient 360 for this reference.
       const cache = await loadAndCacheClinicalRecords({
         session,
         referenceId: account.healthExReferenceId,
-        rawUri: ingest.raw_uri,
-        transactionId: ingest.transaction_id,
-        ingestClinical: ingest.clinical,
       });
       cache.source = 'live';
 
-      const persisted = await persistCacheToDatabase(cache, ingest.raw_uri);
+      if (!cacheHasRows(cache)) {
+        setError('No clinical data returned from HealthEx yet.');
+        setRefreshing(false);
+        return { ok: false as const, error: 'empty_clinical' };
+      }
+
+      const consentReferenceId = resolveConsentReferenceId(account);
+      const persisted = await persistCacheToDatabase(cache);
       if (!persisted.ok) {
+        applyClinicalCache(cache, {
+          healthExPatientId: cache.patientId || account.healthExPatientId,
+          healthexConsentStatus: cache.consentStatus || account.healthexConsentStatus,
+          healthexRetrievalStatus: cache.retrievalStatus || account.healthexRetrievalStatus,
+          lastIngestAt: cache.fetchedAt,
+          consentReferenceId: consentReferenceId || account.consentReferenceId,
+        });
+        setDataSource('live');
         setError(persisted.error || 'Failed to save clinical data to database');
         setRefreshing(false);
-        return { ok: false as const, error: persisted.error || 'persist_failed' };
+        return { ok: false as const, error: persisted.error || 'persist_failed', cache };
       }
 
       const stored = persisted.portalSnapshot || cache;
       stored.source = 'database';
-      const enterprisePatientId =
-        persisted.enterprisePatientId ||
-        sync.account.enterprisePatientId ||
-        account.enterprisePatientId;
-
-      const next = updateAccount(account, {
-        clinicalCache: stored,
-        lastIngestRawUri: ingest.raw_uri,
-        lastIngestAt: new Date().toISOString(),
+      applyClinicalCache(stored, {
+        enterprisePatientId:
+          persisted.enterprisePatientId || account.enterprisePatientId,
         healthExPatientId: cache.patientId || account.healthExPatientId,
         healthexConsentStatus: cache.consentStatus || account.healthexConsentStatus,
         healthexRetrievalStatus: cache.retrievalStatus || account.healthexRetrievalStatus,
-        consentReferenceId,
-        healthExConnected: true,
-        consentStatus: 'granted',
-        consentGrantedAt: account.consentGrantedAt || new Date().toISOString(),
-        enterprisePatientId,
+        lastIngestAt: cache.fetchedAt,
+        consentReferenceId: consentReferenceId || account.consentReferenceId,
       });
-      saveAccount(next);
-      replaceAccount(next);
       setDataSource('database');
       setRefreshing(false);
-      return { ok: true as const, cache: stored, ingest };
+      return { ok: true as const, cache: stored };
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       setError(message);
@@ -488,10 +402,10 @@ export function useHealthRecords() {
     }
   }, [
     account,
+    applyClinicalCache,
     connected,
     loadFromDatabase,
     persistCacheToDatabase,
-    replaceAccount,
     session,
   ]);
 

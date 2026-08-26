@@ -20,7 +20,6 @@ export const PRIVACY_NAV: NavItem[] = [
 export const REGISTRATION_STEPS = [
   { step: 1, label: 'Account', href: '/register' },
   { step: 2, label: 'Verify Email', href: '/verify-email' },
-  { step: 3, label: 'Verify Phone', href: '/verify-phone' },
 ] as const;
 
 export const HEALTH_RECORD_NAV: NavItem[] = [

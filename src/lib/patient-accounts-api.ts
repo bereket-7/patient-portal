@@ -72,13 +72,25 @@ function isHttpStatusLabel(value: string): boolean {
 
 const ERROR_MESSAGES: Record<string, string> = {
   invalid_credentials: 'Invalid email or password.',
+  google_sign_in_failed:
+    'Google sign-in failed. Confirm Authorized JavaScript origins include this site (e.g. http://localhost:3102), GOOGLE_CLIENT_ID matches the Web client, and restart the API gateway.',
   invalid_login_payload: 'Enter your email and password.',
   invalid_registration_payload: 'Please fix the highlighted fields.',
   email_already_registered: 'An account with this email already exists.',
   phone_already_registered: 'An account with this phone number already exists.',
-  account_unverified: 'Finish email and phone verification before signing in.',
+  account_unverified: 'Verify your email before signing in.',
   account_disabled: 'This account is disabled. Contact support.',
   account_not_found: 'No account found for this email.',
+  id_token_required: 'Google sign-in did not return a token. Try again.',
+  google_not_configured:
+    'Google Sign-In is not configured on the server. Ask an admin to set GOOGLE_CLIENT_ID.',
+  google_email_unverified:
+    'Your Google account email is not verified. Use a verified Google account or email registration.',
+  invalid_google_token: 'Google sign-in failed. Try again.',
+  verification_token_required: 'This verification link is missing a token.',
+  invalid_verification_token: 'This verification link is invalid. Request a new email.',
+  verification_token_expired: 'This verification link has expired. Request a new email.',
+  smtp_not_configured: 'Email is not configured on the server. Try again later.',
   rate_limit_exceeded: 'Too many attempts. Wait a moment and try again.',
   network_error: 'Unable to reach the API. Confirm the gateway is running.',
   dev_patient_accounts_disabled:
@@ -248,5 +260,77 @@ export async function loginPatientAccount(
     accessToken: data.accessToken || data.token,
     tokenType: data.tokenType,
     expiresIn: data.expiresIn,
+  };
+}
+
+export async function loginPatientAccountWithGoogle(
+  idToken: string,
+): Promise<LoginPatientResult> {
+  const data = await patientAccountsFetch<{
+    status?: string;
+    account?: DevPatientAccount;
+    accessToken?: string;
+    token?: string;
+    tokenType?: string;
+    expiresIn?: string;
+    mfaToken?: string;
+  }>('/google', {
+    method: 'POST',
+    body: JSON.stringify({ idToken }),
+  });
+
+  if (data?.status === 'mfa_required' || data?.mfaToken) {
+    if (!data.mfaToken) {
+      throw new PatientAccountsApiError('mfa_required', 'Multi-factor authentication is required.', 401);
+    }
+    return {
+      status: 'mfa_required',
+      mfaToken: data.mfaToken,
+      expiresIn: data.expiresIn,
+    };
+  }
+
+  if (!data?.account) {
+    throw new PatientAccountsApiError('invalid_credentials', ERROR_MESSAGES.invalid_credentials, 401);
+  }
+
+  return {
+    status: 'authenticated',
+    account: data.account,
+    accessToken: data.accessToken || data.token,
+    tokenType: data.tokenType,
+    expiresIn: data.expiresIn,
+  };
+}
+
+export async function verifyPatientEmailToken(token: string): Promise<DevPatientAccount> {
+  const data = await patientAccountsFetch<{ account?: DevPatientAccount }>('/verify-email', {
+    method: 'POST',
+    body: JSON.stringify({ token }),
+  });
+  if (!data?.account) {
+    throw new PatientAccountsApiError(
+      'invalid_verification_token',
+      ERROR_MESSAGES.invalid_verification_token,
+      400,
+    );
+  }
+  return data.account;
+}
+
+export async function resendPatientVerificationEmail(email: string): Promise<{
+  status: string;
+  emailSent: boolean;
+}> {
+  const data = await patientAccountsFetch<{
+    status?: string;
+    email_sent?: boolean;
+  }>('/resend-verification', {
+    method: 'POST',
+    body: JSON.stringify({ email }),
+  });
+  return {
+    status: data.status || 'sent',
+    emailSent: data.email_sent === true,
   };
 }
