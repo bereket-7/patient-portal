@@ -177,6 +177,15 @@ export function shouldUseBackendApis(): boolean {
   return process.env.NEXT_PUBLIC_DEMO_MODE !== 'true';
 }
 
+export type ClinicalProcessingStatus = 'PENDING' | 'READY' | 'PARTIAL' | 'FAILED';
+
+export type ClinicalProcessingError = {
+  stage: string;
+  reason: string;
+  resource_type?: string;
+  at?: string;
+};
+
 export type PatientClinicalProfile = {
   enterprise_id: string;
   patient_id: string;
@@ -201,6 +210,14 @@ export type PatientClinicalProfile = {
   updated_at: string;
   portal_snapshot?: Record<string, unknown> | null;
   healthex_reference_id?: string | null;
+  processing_status?: ClinicalProcessingStatus;
+  quality_score?: number | null;
+  issues?: string[];
+  errors?: ClinicalProcessingError[];
+  transaction_id?: string | null;
+  resource_counts?: Record<string, number>;
+  integrity_hash?: string | null;
+  reason?: string;
 };
 
 export async function fetchPatientClinicalProfile(
