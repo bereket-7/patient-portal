@@ -101,17 +101,27 @@ export function mapClinicalProfileToCache(params: {
   source?: CachedClinicalRecords['source'];
 }): CachedClinicalRecords {
   const records = mapClinicalProfileToHealthRecords(params.profile);
+  const resourceCounts =
+    params.profile.resource_counts && Object.keys(params.profile.resource_counts).length > 0
+      ? params.profile.resource_counts
+      : {
+          Condition: records.conditions.length,
+          MedicationRequest: records.medications.length,
+          Observation: records.observations.length,
+          Encounter: records.encounters.length,
+        };
   return {
     fetchedAt: params.profile.updated_at || new Date().toISOString(),
     referenceId: params.referenceId,
     patientId: params.profile.patient_id,
-    resourceCounts: {
-      Condition: records.conditions.length,
-      MedicationRequest: records.medications.length,
-      Observation: records.observations.length,
-      Encounter: records.encounters.length,
-    },
+    resourceCounts,
     records,
     source: params.source || 'database',
+    processingStatus: params.profile.processing_status || 'READY',
+    qualityScore: params.profile.quality_score ?? null,
+    issues: params.profile.issues || [],
+    errors: params.profile.errors || [],
+    integrityHash: params.profile.integrity_hash || null,
+    transactionId: params.profile.transaction_id || undefined,
   };
 }
